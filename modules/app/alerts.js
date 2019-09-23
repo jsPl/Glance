@@ -20,7 +20,7 @@ import Transfer from "./transfer.js";
 
 import DateTime from "./dateTime.js";
 
-const transfer = new Transfer();
+//const transfer = new Transfer();
 
 let sgv = document.getElementById("sgv");
 let largeGraphsSgv = document.getElementById("largeGraphsSgv");
@@ -39,11 +39,11 @@ export default class alerts {
 	check(bg, settings, DISABLE_ALERTS, timeSenseLastSGV) {
 		let currentBG = bg.currentbg;
 		let loopstatus = bg.loopstatus;
-        let staleData = parseInt(timeSenseLastSGV, 10) >= settings.staleDataAlertAfter; // Boolean true if  timeSenseLastSGV > 15
+		let staleData = parseInt(timeSenseLastSGV, 10) >= settings.staleDataAlertAfter; // Boolean true if  timeSenseLastSGV > 15
 
 		alertArrows.href = '../resources/img/arrows/' + bg.direction + '.png';
 		alertArrows.style.display = 'inline';
-		console.log('app - Alerts - Check()')
+		//console.log('app - Alerts - Check()')
 		sgv.style.fill = "#75bd78";
 		largeGraphsSgv.style.fill = "#75bd78";
 		errorLine.style.fill = "#75bd78";
@@ -52,7 +52,7 @@ export default class alerts {
 
 
 		let timeSenseLastSGV = dateTime.getTimeSenseLastSGV(bg.datetime)[1];
-        if (bg.sgv <= parseInt(settings.lowThreshold) && !staleData) {
+		if (bg.sgv <= parseInt(settings.lowThreshold) && !staleData) {
 			if (!settings.disableAlert) {
 				if (!DISABLE_ALERTS) {
 					if (settings.lowAlerts) {
@@ -155,7 +155,7 @@ export default class alerts {
 			}
 		}
 
-    // check if stale data 
+		// check if stale data 
 		if (staleData) {
 			if (!settings.disableAlert) {
 				if (!DISABLE_ALERTS) {

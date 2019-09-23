@@ -10,24 +10,43 @@
  *
  * ------------------------------------------------
  */
-
-
-
-// Import the messaging module
 import * as messaging from "messaging";
+import { me } from "appbit";
 
-export default class transfer { 
-  // Send data
-  send(data) {
-    console.log('app - transfer - send')
-    if (messaging.peerSocket.readyState === messaging.peerSocket.OPEN) {
-      // Send a command to the companion
-      messaging.peerSocket.send({
-        command: 'forceCompanionTransfer',
-        data: data,
-    });
+export default class transfer {
+    constructor() {
+        messaging.peerSocket.onopen = () => {
+            console.log('App -> messaging -> socket open');
+        }
+        messaging.peerSocket.onclose = evt => {
+            console.log(`App -> messaging -> socket close: ${evt.reason} [code: ${evt.code}] wasClean: ${evt.wasClean}`);
+        }
+        messaging.peerSocket.onerror = evt => {
+            console.log(`App -> messaging -> socket error: ${evt.message} [code: ${evt.code}]`);
+        }
     }
-  }
+
+    // Send data
+    send(data) {
+        const isOpen = messaging.peerSocket.readyState === messaging.peerSocket.OPEN;
+        const isClosed = messaging.peerSocket.readyState === messaging.peerSocket.CLOSED;
+        const stateText = isOpen ? 'OPEN' : (isClosed ? 'CLOSED' : 'unknown');
+
+        console.log(`App -> messaging -> send [${stateText}]`)
+
+        // if (isOpen) {
+        try {
+            messaging.peerSocket.send({ command: 'forceCompanionTransfer', data: data });
+        }
+        catch (err) {
+            console.error(err)
+            if (isClosed) {
+                //console.log('Exiting due to socket CLOSED')
+                //me.exit();
+            }
+        }
+        //}
+    }
 };
 
 
