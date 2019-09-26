@@ -13,22 +13,23 @@
 import { outbox } from "file-transfer";
 import { encode } from 'cbor';
 import * as messaging from "messaging";
+import { socketCodes } from '../../common';
 
 const FILE_TRANSFER_MAX_RETRIES = 5;
 
 class Transfer {
     constructor() {
-        this.handleOnMessage = function(){};
-        this.handleMessageSent = function(){};
+        this.handleOnMessage = function () { };
+        this.handleMessageSent = function () { };
 
         messaging.peerSocket.onopen = () => {
-            console.log('Companion -> messsaging -> socket open');
+            console.log(`Companion -> messaging -> socket [OPEN]`);
         }
         messaging.peerSocket.onclose = evt => {
-            console.log(`Companion -> messaging -> socket close: ${evt.reason} [code: ${evt.code}] wasClean: ${evt.wasClean}`);
+            console.log(`Companion -> messaging -> socket [${socketCodes[evt.code]}]: ${evt.reason} wasClean: ${evt.wasClean}`);
         }
         messaging.peerSocket.onerror = evt => {
-            console.log(`Companion -> messaging -> socket error: ${evt.message} [code: ${evt.code}]`);
+            console.log(`Companion -> messaging -> socket [${socketCodes[evt.code]}]: ${evt.message} [code: ${evt.code}]`);
         }
         messaging.peerSocket.onmessage = evt => {
             console.log('Companion -> messaging -> onmessage from app: ' + JSON.stringify(evt.data));
@@ -36,7 +37,7 @@ class Transfer {
         }
     }
 
-    onMessage(callback) { 
+    onMessage(callback) {
         this.handleOnMessage = callback;
         return this;
     }
@@ -52,14 +53,14 @@ class Transfer {
         if (retry > 0) {
             console.log(`Companion -> File transfer -> retrying ${retry}/${FILE_TRANSFER_MAX_RETRIES}`)
         }
-        console.log(`Companion -> File transfer -> enqueueing ${filename}`)
+        console.log(`Companion -> File transfer -> ${filename} [enqueueing]`)
 
         outbox.enqueue(filename, encode(data))
             .then(ft => {
+                console.log(`Companion -> File transfer -> ${ft.name} [${ft.readyState}]`);
                 ft.onchange = evt => {
-                    console.log(`Companion -> File transfer -> Transfer state change of ${ft.name} [${ft.readyState}]`)
+                    console.log(`Companion -> File transfer -> ${ft.name} [${ft.readyState}]`)
                 }
-                console.log(`Companion -> File transfer -> Transfer of ${ft.name} successfully queued [${ft.readyState}]`);
             })
             .catch(error => {
                 console.log(`Companion -> File transfer -> Error: Failed to queue ${filename}: ${error}`);
@@ -96,9 +97,7 @@ class Transfer {
     }
 
     socketState() {
-        const isOpen = messaging.peerSocket.readyState === messaging.peerSocket.OPEN;
-        const isClosed = messaging.peerSocket.readyState === messaging.peerSocket.CLOSED;
-        return isOpen ? 'OPEN' : (isClosed ? 'CLOSED' : 'WAIT');
+        return socketCodes[messaging.peerSocket.readyState] || '?'
     }
 }
 

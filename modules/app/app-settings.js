@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import { defaults } from '../../common/default-settings';
+import { defaults } from '../../common';
 
 const filename = 'settings.json';
 

@@ -81,7 +81,7 @@ async function sendData() {
     if (dataReceivedFromWatch
         && dataReceivedFromWatch.lastBgTime === bgReading.date
         && dataReceivedFromWatch.reason !== 'force refresh') {
-        console.log(`Companion -> skipping sendData, last bg time on watch match phone reading: ${bgReading.date}`)
+        console.log(`Companion -> sendData [SKIPPING], last bg time on watch match phone reading: ${bgReading.date}`)
         setTimeout(sendData, 30 * SECOND);
         transfer.sendMessage({ cmd: 'BG_READING_MATCH' })
         return;
@@ -133,10 +133,8 @@ me.onwakeinterval = () => {
 }
 
 me.onunload = () => {
-    const rand = Math.random();
-    console.info(`Companion -> onunload event: settingsStorage force refresh with random value ${rand}`);
+    console.info(`Companion -> onunload event`);
     transfer.cancel();
-    settingsStorage.setItem('refresh', rand);
 }
 
 app.onreadystatechange = () => {
@@ -152,6 +150,3 @@ app.onreadystatechange = () => {
         //me.yield()
     }
 }
-
-// wait 1 seconds before getting things started
-//setTimeout(sendData, 1000);

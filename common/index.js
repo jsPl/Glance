@@ -1,3 +1,5 @@
+import { peerSocket } from 'messaging';
+
 export const defaults = {
     url: 'http://127.0.0.1:17580/sgv.json',
     extraDataUrl: null,
@@ -25,4 +27,13 @@ export const defaults = {
     enableDOW: true,
     rapidRise: false,
     rapidFall: true
+}
+
+export const socketCodes = {
+    [peerSocket.CONNECTION_LOST]: 'CONN_LOST',
+    [peerSocket.PEER_INITIATED]: 'PEER_INITIATED',
+    [peerSocket.SOCKET_ERROR]: 'ERROR',
+    [peerSocket.BUFFER_FULL]: 'BUFFER_FULL',
+    [peerSocket.OPEN]: 'OPEN',
+    [peerSocket.CLOSED]: 'CLOSE'
 }

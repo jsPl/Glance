@@ -12,7 +12,7 @@
  */
 import { settingsStorage } from "settings";
 import Logs from "./logs.js";
-import { defaults } from "../../common/default-settings";
+import { defaults } from "../../common";
 
 const logs = new Logs();
 

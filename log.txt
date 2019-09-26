@@ -4,18 +4,18 @@ fitbit$ [8D[8C[1000D[Kfitbit$ b[9D[9C[1000D[Kfitbit$ bu[10D[10C[1000D
 > @ build D:\fitbit\apps\Glance
 > fitbit-build
 
-[22:19:23][info][app] Building app for Fitbit Versa
-[22:19:26][info][companion] Building companion
-[22:19:28][info][settings] Building settings
-[22:19:28][info][build] App UUID: 29c153b9-9a35-4929-b6cd-f78eb18893d3, BuildID: 0x034e7c6b127a39d8
+[17:54:53][info][app] Building app for Fitbit Versa
+[17:54:56][info][companion] Building companion
+[17:54:58][info][settings] Building settings
+[17:54:58][info][build] App UUID: 29c153b9-9a35-4929-b6cd-f78eb18893d3, BuildID: 0x0e748d9436dc8736
 No app package specified. Using default ./build/app.fba.
-Loaded appID:29c153b9-9a35-4929-b6cd-f78eb18893d3 buildID:0x034e7c6b127a39d8
+Loaded appID:29c153b9-9a35-4929-b6cd-f78eb18893d3 buildID:0x0e748d9436dc8736
 App requires a device, connecting...
 Auto-connecting only known device: Versa
 App requires a phone, connecting...
 Auto-connecting only known phone: ZUK Z2131
 [?25lSideloading app: starting...
-[?25l[1000D[K[1A[1000D[KSideloading app: 92% completed
+[?25l[1000D[K[1A[1000D[KSideloading app: 91% completed
 [?25l[1000D[K[1A[1000D[KSideloading app: 100% completed
 [?25l[1000D[K[1A[1000D[KApp install complete (partial)
 [?25h[?25lSideloading companion: starting...
@@ -23,46 +23,70 @@ Auto-connecting only known phone: ZUK Z2131
 [?25l[1000D[K[1A[1000D[KSideloading companion: 100% completed
 [?25l[1000D[K[1A[1000D[KCompanion install complete (full)
 [?25hLaunching app
-fitbit$ [8D[8C[1000D[K[22:19:39] Companion: Loaded and evaluated: file:///android_asset/bootstrap.js(js-engine-bootstrap.html:9,1)
-fitbit$ [1000D[K[22:19:39] Companion: Companion launch reason: peerAppLaunched(companion/index.js:111,1)
-fitbit$ [1000D[K[22:19:39] Companion: Loaded and evaluated: file:///data/user/0/com.fitbit.FitbitMobile/app_companions/29c153b9-9a35-4929-b6cd-f78eb18893d3/0x034e7c6b127a39d8/companion.js(js-engine-bootstrap.html:9,1)
-fitbit$ [1000D[K[22:19:39] Companion: Companion -> app.onreadystatechange [Versa] started(companion/index.js:142,1)
-fitbit$ [1000D[K[22:19:39] Companion: Companion -> app.onreadystatechange [started] -> sendData()(companion/index.js:145,5)
-fitbit$ [1000D[K[22:19:39] Companion: Companion -> fetch: get data from http://127.0.0.1:17580/sgv.json?count=47(modules/companion/fetch.js:21,9)
-fitbit$ [1000D[K[22:19:39] Companion: Companion launched by [launchedOnTracker]
-fitbit$ [1000D[K[22:19:39] Companion: Companion -> fetch: got data svg: 141 time: 1569442621301(modules/companion/fetch.js:29,17)
-fitbit$ [1000D[K[22:19:39] Companion: Companion -> File transfer -> enqueueing response2.json(modules/companion/transfer.js:52,9)
-fitbit$ [1000D[K[22:19:39] Companion: Companion -> File transfer -> Transfer of response2.json successfully queued [pending](modules/companion/transfer.js:62,17)
-fitbit$ [1000D[K[22:19:41] Companion: Companion -> File transfer -> Transfer state change of response2.json [transferred](modules/companion/transfer.js:57,9)
-fitbit$ [1000D[K[22:19:45]       App: App Started
-fitbit$ [1000D[K[22:19:49] Companion: Companion -> messsaging -> socket open(modules/companion/transfer.js:24,9)
-fitbit$ [1000D[K[22:19:49]       App: App -> Settings -> readFromFilesystemOrDefaults: settings exist on filesystem {"url":"http://127.0.0.1:17580/sgv.json?count=47&steps=7159&heart=0","extraDataUrl":null,"dataSource":"xdrip","highThreshold":"190","lowThreshold":"75","glucoseUnits":"...(modules/app/app-settings.js:24,13)
-fitbit$ [1000D[K[22:19:49]       App: NO DATA(app/index.js:267,9)
-fitbit$ [1000D[K[22:19:49]       App: App -> New file!(app/index.js:186,5)
-fitbit$ [1000D[K[22:19:50]       App: App -> Settings -> writeToFilesystem: {"url":"http://127.0.0.1:17580/sgv.json?count=47","extraDataUrl":null,"dataSource":"xdrip","highThreshold":"190","lowThreshold":"75","glucoseUnits":"mgdl","disableAlert":true,"timeFormat":true,"dateFormat(modules/app/app-settings.js:8,9)
-fitbit$ [1000D[K[22:19:50]       App: GOT DATA epoch 1569442621301, svg 141(app/index.js:217,9)
-fitbit$ [1000D[K[22:19:50]       App: Launch complete - durations: foregrounding(12380ms), first paint(1031ms), total(13417ms).
-fitbit$ [1000D[K[22:19:51]       App: App -> messaging -> socket open(modules/app/transfer.js:25,13)
-fitbit$ [1000D[K[22:20:09]       App: GOT DATA epoch 1569442621301, svg 141(app/index.js:217,9)
-fitbit$ [1000D[K[22:20:31]       App: GOT DATA epoch 1569442621301, svg 141(app/index.js:217,9)
-fitbit$ [1000D[K[22:20:52]       App: GOT DATA epoch 1569442621301, svg 141(app/index.js:217,9)
-fitbit$ [1000D[K[22:21:13]       App: GOT DATA epoch 1569442621301, svg 141(app/index.js:217,9)
-fitbit$ [1000D[K[22:21:34]       App: GOT DATA epoch 1569442621301, svg 141(app/index.js:217,9)
-fitbit$ [1000D[K[22:21:55]       App: GOT DATA epoch 1569442621301, svg 141(app/index.js:217,9)
-fitbit$ [1000D[K[22:22:17]       App: GOT DATA epoch 1569442621301, svg 141(app/index.js:217,9)
-fitbit$ [1000D[K[22:22:17]       App: Last reading is from over 5 minutes ago. Requesting data...(app/index.js:244,13)
-fitbit$ [1000D[K[22:22:16]       App: App -> messaging -> send [OPEN](modules/app/transfer.js:69,9)
-fitbit$ [1000D[K[22:20:27] Companion: Companion -> messaging -> onmessage from app: {"cmd":"forceCompanionTransfer","data":{"heart":0,"steps":7159,"lastBgTime":1569442621301,"reason":"bg reading over 5 min ago"}}(modules/companion/transfer.js:33,9)
-fitbit$ [1000D[K[22:20:28] Companion: Companion -> fetch: get data from http://127.0.0.1:17580/sgv.json?count=47&steps=7159&heart=0(modules/companion/fetch.js:21,9)
-fitbit$ [1000D[K[22:20:28] Companion: Companion -> fetch: got data svg: 131 time: 1569442921018(modules/companion/fetch.js:29,17)
-fitbit$ [1000D[K[22:20:28] Companion: Companion -> File transfer -> enqueueing response2.json(modules/companion/transfer.js:52,9)
-fitbit$ [1000D[K[22:20:28] Companion: Companion -> File transfer -> Transfer of response2.json successfully queued [pending](modules/companion/transfer.js:62,17)
-fitbit$ [1000D[K[22:20:30] Companion: Companion -> File transfer -> Transfer state change of response2.json [transferred](modules/companion/transfer.js:57,9)
-fitbit$ [1000D[K[22:22:19]       App: App -> New file!(app/index.js:186,5)
-fitbit$ [1000D[K[22:22:20]       App: App -> Settings -> writeToFilesystem: {"url":"http://127.0.0.1:17580/sgv.json?count=47&steps=7159&heart=0","extraDataUrl":null,"dataSource":"xdrip","highThreshold":"190","lowThreshold":"75","glucoseUnits":"mgdl","disableAlert":true,"timeFormat(modules/app/app-settings.js:8,9)
-fitbit$ [1000D[K[22:22:20]       App: GOT DATA epoch 1569442921018, svg 131(app/index.js:217,9)
-fitbit$ [1000D[K[22:22:37]       App: GOT DATA epoch 1569442921018, svg 131(app/index.js:217,9)
-fitbit$ [1000D[K[22:22:58]       App: GOT DATA epoch 1569442921018, svg 131(app/index.js:217,9)
-fitbit$ [1000D[K[22:23:20]       App: GOT DATA epoch 1569442921018, svg 131(app/index.js:217,9)
-fitbit$ [1000D[KPhone 'ZUK Z2131' disconnected
+fitbit$ [8D[8C[1000D[K[17:55:18]       App: App Started
+fitbit$ [1000D[K[17:55:08] Companion: Loaded and evaluated: file:///android_asset/bootstrap.js(js-engine-bootstrap.html:9,1)
+fitbit$ [1000D[K[17:55:09] Companion: Companion launch reason: peerAppLaunched(companion/index.js:111,1)
+fitbit$ [1000D[K[17:55:09] Companion: Loaded and evaluated: file:///data/user/0/com.fitbit.FitbitMobile/app_companions/29c153b9-9a35-4929-b6cd-f78eb18893d3/0x0e748d9436dc8736/companion.js(js-engine-bootstrap.html:9,1)
+fitbit$ [1000D[K[17:55:09] Companion: Companion -> app.onreadystatechange [Versa] started(companion/index.js:140,1)
+fitbit$ [1000D[K[17:55:09] Companion: Companion -> app.onreadystatechange [started] -> sendData()(companion/index.js:143,5)
+fitbit$ [1000D[K[17:55:10] Companion: Companion -> fetch: get data from http://127.0.0.1:17580/sgv.json?count=47(modules/companion/fetch.js:21,9)
+fitbit$ [1000D[K[17:55:10] Companion: Companion launched by [launchedOnTracker]
+fitbit$ [1000D[K[17:55:23]       App: App -> Settings -> readFromFilesystemOrDefaults: settings exist on filesystem {"url":"http://127.0.0.1:17580/sgv.json?count=47&steps=6927&heart=0","extraDataUrl":null,"dataSource":"xdrip","highThreshold":"190","lowThreshold":"75","glucoseUnits":"...(modules/app/app-settings.js:24,13)
+fitbit$ [1000D[K[17:55:23]       App: NO DATA(app/index.js:266,9)
+fitbit$ [1000D[K[17:55:10] Companion: Companion -> messaging -> socket [OPEN](modules/companion/transfer.js:25,9)
+fitbit$ [1000D[K[17:55:10] Companion: Companion -> fetch: got data svg: 126 time: 1569512893506(modules/companion/fetch.js:29,17)
+fitbit$ [1000D[K[17:55:10] Companion: Companion -> File transfer -> response2.json [enqueueing](modules/companion/transfer.js:53,9)
+fitbit$ [1000D[K[17:55:23]       App: Launch complete - durations: foregrounding(14185ms), first paint(206ms), total(14402ms).
+fitbit$ [1000D[K[17:55:10] Companion: Companion -> File transfer -> response2.json [pending](modules/companion/transfer.js:58,9)
+fitbit$ [1000D[K[17:55:24]       App: App -> messaging -> socket [OPEN](modules/app/transfer.js:26,13)
+fitbit$ [1000D[K[17:55:26]       App: App -> New file!(app/index.js:185,5)
+fitbit$ [1000D[K[17:55:25]       App: App -> Settings -> writeToFilesystem: {"url":"http://127.0.0.1:17580/sgv.json?count=47","extraDataUrl":null,"dataSource":"xdrip","highThreshold":"190","lowThreshold":"75","glucoseUnits":"mgdl","disableAlert":true,"timeFormat":true,"dateFormat(modules/app/app-settings.js:8,9)
+fitbit$ [1000D[K[17:55:12] Companion: Companion -> File transfer -> response2.json [transferred](modules/companion/transfer.js:61,17)
+fitbit$ [1000D[K[17:55:25]       App: GOT DATA epoch 1569512893506, svg 126(app/index.js:216,9)
+fitbit$ [1000D[K[17:55:25]       App: Last reading is from over 7 minutes ago. Requesting data...(app/index.js:243,13)
+fitbit$ [1000D[K[17:55:25]       App: App -> messaging -> send [OPEN](modules/app/transfer.js:70,9)
+fitbit$ [1000D[K[17:55:13] Companion: Companion -> messaging -> onmessage from app: {"cmd":"forceCompanionTransfer","data":{"heart":0,"steps":6927,"lastBgTime":1569512893506,"reason":"bg reading over 7 min ago"}}(modules/companion/transfer.js:34,9)
+fitbit$ [1000D[K[17:55:13] Companion: Companion -> fetch: get data from http://127.0.0.1:17580/sgv.json?count=47&steps=6927&heart=0(modules/companion/fetch.js:21,9)
+fitbit$ [1000D[K[17:55:14] Companion: Companion -> fetch: got data svg: 126 time: 1569512893506(modules/companion/fetch.js:29,17)
+fitbit$ [1000D[K[17:55:14] Companion: Companion -> skipping sendData, last bg time on watch match phone reading: 1569512893506(companion/index.js:81,5)
+fitbit$ [1000D[K[17:55:14] Companion: Companion -> messaging -> send [OPEN](modules/companion/transfer.js:61,17)
+fitbit$ [1000D[K[17:55:28]       App: App -> messaging -> onmessage from companion: {"cmd":"BG_READING_MATCH"}(modules/app/transfer.js:38,13)
+fitbit$ [1000D[K[17:55:44]       App: GOT DATA epoch 1569512893506, svg 126(app/index.js:216,9)
+fitbit$ [1000D[K[17:55:44] Companion: Companion -> fetch: get data from http://127.0.0.1:17580/sgv.json?count=47&steps=6927&heart=0(modules/companion/fetch.js:21,9)
+fitbit$ [1000D[K[17:55:44] Companion: Companion -> fetch: got data svg: 126 time: 1569512893506(modules/companion/fetch.js:29,17)
+fitbit$ [1000D[K[17:55:44] Companion: Companion -> skipping sendData, last bg time on watch match phone reading: 1569512893506(companion/index.js:81,5)
+fitbit$ [1000D[K[17:55:44] Companion: Companion -> messaging -> send [OPEN](modules/companion/transfer.js:61,17)
+fitbit$ [1000D[K[17:55:58]       App: App -> messaging -> onmessage from companion: {"cmd":"BG_READING_MATCH"}(modules/app/transfer.js:38,13)
+fitbit$ [1000D[K[17:56:04]       App: GOT DATA epoch 1569512893506, svg 126(app/index.js:216,9)
+fitbit$ [1000D[K[17:56:25]       App: GOT DATA epoch 1569512893506, svg 126(app/index.js:216,9)
+fitbit$ [1000D[K[17:56:15] Companion: Companion -> fetch: get data from http://127.0.0.1:17580/sgv.json?count=47&steps=6927&heart=0(modules/companion/fetch.js:21,9)
+fitbit$ [1000D[K[17:56:15] Companion: Companion -> fetch: got data svg: 126 time: 1569512893506(modules/companion/fetch.js:29,17)
+fitbit$ [1000D[K[17:56:15] Companion: Companion -> skipping sendData, last bg time on watch match phone reading: 1569512893506(companion/index.js:81,5)
+fitbit$ [1000D[K[17:56:15] Companion: Companion -> messaging -> send [OPEN](modules/companion/transfer.js:61,17)
+fitbit$ [1000D[K[17:56:30]       App: App -> messaging -> onmessage from companion: {"cmd":"BG_READING_MATCH"}(modules/app/transfer.js:38,13)
+fitbit$ [1000D[K[17:56:46]       App: GOT DATA epoch 1569512893506, svg 126(app/index.js:216,9)
+fitbit$ [1000D[K[17:56:45] Companion: Companion -> fetch: get data from http://127.0.0.1:17580/sgv.json?count=47&steps=6927&heart=0(modules/companion/fetch.js:21,9)
+fitbit$ [1000D[K[17:56:46] Companion: Companion -> fetch: got data svg: 126 time: 1569512893506(modules/companion/fetch.js:29,17)
+fitbit$ [1000D[K[17:56:46] Companion: Companion -> skipping sendData, last bg time on watch match phone reading: 1569512893506(companion/index.js:81,5)
+fitbit$ [1000D[K[17:56:46] Companion: Companion -> messaging -> send [OPEN](modules/companion/transfer.js:61,17)
+fitbit$ [1000D[K[17:57:01]       App: App -> messaging -> onmessage from companion: {"cmd":"BG_READING_MATCH"}(modules/app/transfer.js:38,13)
+fitbit$ [1000D[K[17:57:08]       App: GOT DATA epoch 1569512893506, svg 126(app/index.js:216,9)
+fitbit$ [1000D[K[17:57:29]       App: GOT DATA epoch 1569512893506, svg 126(app/index.js:216,9)
+fitbit$ [1000D[K[17:57:16] Companion: Companion -> fetch: get data from http://127.0.0.1:17580/sgv.json?count=47&steps=6927&heart=0(modules/companion/fetch.js:21,9)
+fitbit$ [1000D[K[17:57:16] Companion: Companion -> fetch: got data svg: 126 time: 1569512893506(modules/companion/fetch.js:29,17)
+fitbit$ [1000D[K[17:57:16] Companion: Companion -> skipping sendData, last bg time on watch match phone reading: 1569512893506(companion/index.js:81,5)
+fitbit$ [1000D[K[17:57:16] Companion: Companion -> messaging -> send [OPEN](modules/companion/transfer.js:61,17)
+fitbit$ [1000D[K[17:57:30]       App: App -> messaging -> onmessage from companion: {"cmd":"BG_READING_MATCH"}(modules/app/transfer.js:38,13)
+fitbit$ [1000D[K[17:57:50]       App: GOT DATA epoch 1569512893506, svg 126(app/index.js:216,9)
+fitbit$ [1000D[K[17:58:11]       App: GOT DATA epoch 1569512893506, svg 126(app/index.js:216,9)
+fitbit$ [1000D[K[17:57:47] Companion: Companion -> fetch: get data from http://127.0.0.1:17580/sgv.json?count=47&steps=6927&heart=0(modules/companion/fetch.js:21,9)
+fitbit$ [1000D[K[17:57:47] Companion: Companion -> fetch: got data svg: 128 time: 1569513496451(modules/companion/fetch.js:29,17)
+fitbit$ [1000D[K[17:57:47] Companion: Companion -> File transfer -> response2.json [enqueueing](modules/companion/transfer.js:53,9)
+fitbit$ [1000D[K[17:57:47] Companion: Companion -> File transfer -> response2.json [pending](modules/companion/transfer.js:58,9)
+fitbit$ [1000D[K[17:58:32]       App: GOT DATA epoch 1569512893506, svg 126(app/index.js:216,9)
+fitbit$ [1000D[K[17:58:32]       App: App -> New file!(app/index.js:185,5)
+fitbit$ [1000D[K[17:58:32]       App: App -> Settings -> writeToFilesystem: {"url":"http://127.0.0.1:17580/sgv.json?count=47&steps=6927&heart=0","extraDataUrl":null,"dataSource":"xdrip","highThreshold":"190","lowThreshold":"75","glucoseUnits":"mgdl","disableAlert":true,"timeFormat(modules/app/app-settings.js:8,9)
+fitbit$ [1000D[K[17:57:50] Companion: Companion -> File transfer -> response2.json [transferred](modules/companion/transfer.js:61,17)
+fitbit$ [1000D[K[17:58:33]       App: GOT DATA epoch 1569513496451, svg 128(app/index.js:216,9)
+fitbit$ [1000D[K[17:58:53]       App: GOT DATA epoch 1569513496451, svg 128(app/index.js:216,9)
 fitbit$ 

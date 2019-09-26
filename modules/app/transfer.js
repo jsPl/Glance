@@ -12,25 +12,26 @@
  */
 import * as messaging from "messaging";
 import { me } from "appbit";
+import { socketCodes } from '../../common';
 
 class Transfer {
     constructor() {
-        this.handleOpen = function(){};
-        this.handleClose = function(){};
-        this.handleError = function(){};
-        this.handleMessageSent = function(){};
-        this.handleOnMessageReceived = function(){};
+        this.handleOpen = function () { };
+        this.handleClose = function () { };
+        this.handleError = function () { };
+        this.handleMessageSent = function () { };
+        this.handleOnMessageReceived = function () { };
 
         messaging.peerSocket.onopen = evt => {
-            console.log('App -> messaging -> socket open');
+            console.log(`App -> messaging -> socket [OPEN]`);
             this.handleOpen(evt)
         }
         messaging.peerSocket.onclose = evt => {
-            console.log(`App -> messaging -> socket close: ${evt.reason} [code: ${evt.code}] wasClean: ${evt.wasClean}`);
+            console.log(`App -> messaging -> socket [${socketCodes[evt.code]}]: ${evt.reason} wasClean: ${evt.wasClean}`);
             this.handleClose(evt)
         }
         messaging.peerSocket.onerror = evt => {
-            console.log(`App -> messaging -> socket error: ${evt.message} [code: ${evt.code}]`);
+            console.log(`App -> messaging -> socket [${socketCodes[evt.code]}]: ${evt.message} [code: ${evt.code}]`);
             this.handleError(evt)
         }
         messaging.peerSocket.onmessage = evt => {
@@ -39,22 +40,22 @@ class Transfer {
         }
     }
 
-    onOpen(callback) { 
+    onOpen(callback) {
         this.handleOpen = callback;
         return this;
     }
 
-    onClose(callback) { 
+    onClose(callback) {
         this.handleClose = callback;
         return this;
     }
 
-    onError(callback) { 
+    onError(callback) {
         this.handleError = callback;
         return this;
     }
 
-    onMessageReceived(callback) { 
+    onMessageReceived(callback) {
         this.handleOnMessageReceived = callback;
         return this;
     }
@@ -82,9 +83,7 @@ class Transfer {
     }
 
     socketState() {
-        const isOpen = messaging.peerSocket.readyState === messaging.peerSocket.OPEN;
-        const isClosed = messaging.peerSocket.readyState === messaging.peerSocket.CLOSED;
-        return isOpen ? 'OPEN' : (isClosed ? 'CLOSED' : 'WAIT');
+        return socketCodes[messaging.peerSocket.readyState] || '?'
     }
 }
 
