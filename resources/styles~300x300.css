@@ -124,6 +124,15 @@
   y: 8%+3;
 }
 
+#largeGraphStatusLine {
+  x: 3;
+}
+
+#socketMainStatusLine {
+  x: 3%;
+  y: 60%;
+}
+
 #steps {
   x: 10%+3;
   y: 85%+2;

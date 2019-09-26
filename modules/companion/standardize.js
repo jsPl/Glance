@@ -63,7 +63,8 @@ export default class standardize {
 				sage = standardizedExtraData.sage;
 				// add any extra data
 			} 
-			else if (settings.dataSource === 'xdrip') { // xdrip using the sgv endpoint still
+			else if (settings.dataSource === 'xdrip' || settings.dataSource === 'custom') { 
+				// xdrip using the sgv endpoint still
 				bgs = data;
 				if (Array.isArray(bgs)) {
 					bgs[0].datetime = bgs[0].date;

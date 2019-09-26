@@ -30,6 +30,8 @@
         <text class="text" id="iob" />
         <image class="stat-image" href="img/syringe.png" fill="white" id="syringe" />      
         
+        <text text-anchor="start" class="text text-gray" id="socketMainStatusLine" />
+
          <!-- Alert -->
          <svg id="popup" display="none">
             <!-- Black background -->
@@ -101,6 +103,8 @@
         <image href="img/arrows/None.png" id="largeGraphArrows"/>
         <text text-anchor="end" class="text text-gray" id="largeGraphTimeOfLastSgv" />
         <text text-anchor="end" class="text text-gray" id="rawbg"/>
+
+        <text text-anchor="start" class="text text-gray" id="largeGraphStatusLine" />
 
         <text class="text text-gray" id="largeGraphCob" />
         <image class="stat-image" href="img/hamburger.png" fill="white" id="largeGraphHamburger" />

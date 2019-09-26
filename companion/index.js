@@ -13,28 +13,37 @@
 import { settingsStorage } from "settings";
 
 import Settings from "../modules/companion/settings.js";
-import Transfer from "../modules/companion/transfer.js";
+import { transfer } from "../modules/companion/transfer.js";
 import Fetch from "../modules/companion/fetch.js";
 import Standardize from "../modules/companion/standardize.js";
 // import Weather from "../modules/companion/weather.js";
-import Logs from "../modules/companion/logs.js";
-import Sizeof from "../modules/companion/sizeof.js";
+//import Logs from "../modules/companion/logs.js";
+//import Sizeof from "../modules/companion/sizeof.js";
 import Dexcom from "../modules/companion/dexcom.js";
 
-import * as messaging from "messaging";
+//import * as messaging from "messaging";
 import { me } from "companion";
 import { app, device } from "peer";
 
+const SECOND = 1000; // ms
+const MINUTE = SECOND * 60;
+
 const settings = new Settings();
-const transfer = new Transfer();
 const fetch = new Fetch();
 const standardize = new Standardize();
 const dexcom = new Dexcom();
 
 // const weatherURL = new Weather();
-const logs = new Logs();
+//const logs = new Logs();
 //const sizeof = new Sizeof();
 let dataReceivedFromWatch = null;
+
+transfer.onMessage(function (evt) {
+    if (evt.data.cmd === 'forceCompanionTransfer') {
+        dataReceivedFromWatch = evt.data.data;
+        sendData()
+    }
+})
 
 async function sendData() {
     //logs.add('companion - sendData: Version: 2.1.100')
@@ -55,11 +64,7 @@ async function sendData() {
             bloodsugars = await dexcom.getData(sessionId, subDomain);
         }
         else {
-            bloodsugars = {
-                error: {
-                    status: "500"
-                }
-            }
+            bloodsugars = { error: { status: "500" } }
         }
     }
     else {
@@ -69,45 +74,38 @@ async function sendData() {
         }
     }
 
+    const bgReading = Array.isArray(bloodsugars) && bloodsugars.length > 0 ?
+        bloodsugars[0] : null;
+
+    //console.log('comp -> bloodsugars ' + JSON.stringify(bgReading))
+    if (dataReceivedFromWatch
+        && dataReceivedFromWatch.lastBgTime === bgReading.date
+        && dataReceivedFromWatch.reason !== 'force refresh') {
+        console.log(`Companion -> skipping sendData, last bg time on watch match phone reading: ${bgReading.date}`)
+        setTimeout(sendData, 30 * SECOND);
+        transfer.sendMessage({ cmd: 'BG_READING_MATCH' })
+        return;
+    }
 
     Promise.all([bloodsugars, extraData]).then(function (values) {
         const dataToSend = {
             bloodSugars: standardize.bloodsugars(values[0], values[1], store),
-            settings: standardize.settings(store),
-            // weather: values[2].query.results.channel.item.condition,
+            settings: standardize.settings(store)
         }
-        transfer.send(dataToSend);
+        transfer.sendFile(dataToSend);
     });
 }
 
-
-// Listen for messages from the device
-messaging.peerSocket.onmessage = function (evt) {
-    console.log('Companion -> onmessage: got message from app ' + JSON.stringify(evt.data));
-    if (evt.data.command === 'forceCompanionTransfer') {
-        dataReceivedFromWatch = evt.data.data;
-        sendData()
-    }
-};
-
-// Listen for the onerror event
-messaging.peerSocket.onerror = function (err) {
-    // Handle any errors
-    console.log("Connection error: " + err.code + " - " + err.message);
-};
-
 settingsStorage.onchange = function (evt) {
-    logs.add('Line 70: companion - Settings changed send to watch');
+    //logs.add('Line 70: companion - Settings changed send to watch');
     sendData()
-    if (evt.key === "authorizationCode") {
-        // Settings page sent us an oAuth token
-        let data = JSON.parse(evt.newValue);
-        dexcom.getAccessToken(data.name);
-
-    }
+    // if (evt.key === "authorizationCode") {
+    //     // Settings page sent us an oAuth token
+    //     let data = JSON.parse(evt.newValue);
+    //     dexcom.getAccessToken(data.name);
+    // }
 }
 
-const MINUTE = 1000 * 60;
 me.wakeInterval = 5 * MINUTE;
 
 if (me.launchReasons.wokenUp) {
@@ -143,7 +141,7 @@ me.onunload = () => {
 
 app.onreadystatechange = () => {
     console.log(`Companion -> app.onreadystatechange [${device.modelName}] ${app.readyState}`);
-   
+
     if (app.readyState === 'started') {
         console.log(`Companion -> app.onreadystatechange [${app.readyState}] -> sendData()`);
         sendData()

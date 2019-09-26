@@ -5,7 +5,7 @@ const filename = 'settings.json';
 
 class AppSettings {
     writeToFilesystem(settings = {}) {
-        console.log(`AppSettings -> writeToFilesystem: ${JSON.stringify(settings)}`)
+        console.log(`App -> Settings -> writeToFilesystem: ${JSON.stringify(settings)}`)
         fs.writeFileSync(filename, settings, 'cbor');
     }
 
@@ -21,11 +21,11 @@ class AppSettings {
     readFromFilesystemOrDefaults() {
         const settings = this.readFromFilesystem();
         if (settings) {
-            console.log(`AppSettings -> readFromFilesystemOrDefaults: settings exist on filesystem ${JSON.stringify(settings)}`)
+            console.log(`App -> Settings -> readFromFilesystemOrDefaults: settings exist on filesystem ${JSON.stringify(settings)}`)
             return settings;
         }
         else {
-            console.log(`AppSettings -> readFromFilesystemOrDefaults: get default settings`)
+            console.log(`App -> Settings -> readFromFilesystemOrDefaults: get default settings`)
             return defaults;
         }
     }

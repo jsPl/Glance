@@ -28,6 +28,7 @@
   },
   "scripts": {
     "build": "fitbit-build",
-    "build-and-install-log": "echo build-and-install | npx fitbit > log.txt"
+    "build-and-install-log": "echo build-and-install | npx fitbit > log.txt",
+    "build-and-install": "echo build-and-install | npx fitbit"
   }
 }

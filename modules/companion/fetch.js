@@ -10,12 +10,8 @@
  *
  * ------------------------------------------------
  */
-
-
-
-import Logs from "./logs.js";
-const logs = new Logs();
-
+//import Logs from "./logs.js";
+//const logs = new Logs();
 
 export default class messaging {
     //Fetch data from an API endpoint and return a promise
@@ -26,11 +22,14 @@ export default class messaging {
 
         return await fetch(trimmedURL)
             .then(handleResponse)
-            .then((data) => {
-                //logs.add(`Line 28: companion - fetch - get() Data Okay return`)
-                console.log('Companion -> fetch: got data');
+            .then(data => {
+                const txt = Array.isArray(data) && data.length > 0 ?
+                    'svg: ' + data[0].sgv + ' time: ' + data[0].date : '';
+
+                console.log(`Companion -> fetch: got data ${txt}`);
                 return data;
-            }).catch((error) => {
+            })
+            .catch(error => {
                 // not found
                 if (!error.status) {
                     error.status = '404'
@@ -50,9 +49,8 @@ function handleResponse(response) {
     let contentType = response.headers.get('content-type')
     if (contentType.includes('application/json')) {
         return handleJSONResponse(response)
-    } else if (contentType.includes('text/html')) {
-        return handleTextResponse(response)
-    } else {
+    }
+    else {
         // Other response types as necessary. I haven't found a need for them yet though.
         throw new Error(`Sorry, content-type ${contentType} not supported`)
     }
@@ -71,22 +69,6 @@ function handleJSONResponse(response) {
                     status: response.status,
                     statusText: response.statusText
                 }))
-            }
-        })
-}
-// This doesnt work
-function handleTextResponse(response) {
-    return response.text()
-        .then(text => {
-            if (response.ok) {
-                //logs.add(`Line 98 companion - fetch - handleTextResponse() response.ok`)
-                return JSON.parse(text)
-            } else {
-                return Promise.reject({
-                    status: response.status,
-                    statusText: response.statusText,
-                    err: text
-                })
             }
         })
 }

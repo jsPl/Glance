@@ -20,7 +20,7 @@ import Graph from "../modules/app/bloodline.js"
 import UserActivity from "../modules/app/userActivity.js"
 import Alerts from "../modules/app/alerts.js"
 import Errors from "../modules/app/errors.js"
-import Transfer from "../modules/app/transfer.js"
+import { transfer } from "../modules/app/transfer.js"
 import { me } from "appbit";
 import { $, hide, show } from '../modules/app/dom';
 import { heartRateSensor, bodyPresenceSensor } from '../modules/app/sensors';
@@ -33,7 +33,6 @@ const graph = new Graph();
 const userActivity = new UserActivity();
 const alerts = new Alerts();
 const errors = new Errors();
-const transfer = new Transfer();
 
 let main = $("main");
 let sgv = $("sgv");
@@ -81,6 +80,8 @@ let syringe = $("syringe");
 let hamburger = $("hamburger");
 let predictedBg = $("predictedBg");
 const statusLine = $('status-line');
+const largeGraphStatusLine = $('largeGraphStatusLine');
+const socketMainStatusLine = $('socketMainStatusLine');
 
 let settings = appSettings.readFromFilesystemOrDefaults();
 
@@ -141,6 +142,7 @@ errorText.text = '';
 weather.text = '';
 hide(degreeIcon);
 hide(statusLine);
+show(largeGraphStatusLine)
 
 new Clock(function (evt) {
     const timeText = dateTime.getTime(settings.timeFormat, evt.date);
@@ -149,6 +151,25 @@ new Clock(function (evt) {
     largeGraphTime.text = timeText;
     dateElement.text = dateTime.getDate(settings.dateFormat, settings.enableDOW);
 })
+
+function updateSocketStatusLine(code = '') {
+    socketMainStatusLine.text = `${transfer.socketState()}${code !== '' ? ' ' + code : ''}`;
+    largeGraphStatusLine.text = `socket: ${transfer.socketState()}${code !== '' ? ' ' + code : ''}`;
+}
+
+transfer.onOpen(function (evt) {
+    updateSocketStatusLine()
+}).onClose(function (evt) {
+    updateSocketStatusLine()
+}).onError(function (evt) {
+    updateSocketStatusLine('[err]')
+}).onMessageSent(function () {
+    updateSocketStatusLine('[>>]')
+}).onMessageReceived(function (evt) {
+    if (evt.data.cmd === 'BG_READING_MATCH') {
+        updateSocketStatusLine('[=]');
+    }
+});
 
 bodyPresenceSensor.start();
 
@@ -161,7 +182,7 @@ update()
 const updateIntervalId = setInterval(update, 20000);
 
 inbox.onnewfile = () => {
-    console.log("New file!");
+    console.log(`App -> New file!`);
     isRequestingBGReading = false;
     let fileName;
 
@@ -172,6 +193,7 @@ inbox.onnewfile = () => {
             appSettings.writeToFilesystem(data.settings);
         }
 
+        updateSocketStatusLine('[<<]')
         update();
         //display.poke();
     }
@@ -206,19 +228,20 @@ function update() {
         largeGraphTimeOfLastSgv.text = timeSenseLastSGVData[0];
 
         let timeSenseLastSGV = timeSenseLastSGVData[1];
+        const lastBgReadingMinAgo = parseInt(timeSenseLastSGV, 10);
         // if DISABLE_ALERTS is true check if user is in range 
         if (DISABLE_ALERTS && settings.resetAlertDismissal) {
-            if (parseInt(timeSenseLastSGV, 10) < settings.staleDataAlertAfter && currentBgFromBloodSugars.direction != 'DoubleDown' && currentBgFromBloodSugars.direction != 'DoubleUp' && currentBgFromBloodSugars.loopstatus != 'Warning') { // Dont reset alerts for LOS, DoubleUp, doubleDown, Warning
+            if (lastBgReadingMinAgo < settings.staleDataAlertAfter && currentBgFromBloodSugars.direction != 'DoubleDown' && currentBgFromBloodSugars.direction != 'DoubleUp' && currentBgFromBloodSugars.loopstatus != 'Warning') { // Dont reset alerts for LOS, DoubleUp, doubleDown, Warning
                 if (currentBgFromBloodSugars.sgv > parseInt(settings.lowThreshold) && currentBgFromBloodSugars.sgv < parseInt(settings.highThreshold)) { // if the BG is between the threshold 
-                    console.error('here', DISABLE_ALERTS, parseInt(timeSenseLastSGV, 10))
+                    console.error('here', DISABLE_ALERTS, lastBgReadingMinAgo)
                     disableAlertsFalse()
                 }
             }
         }
 
-        if (!isRequestingBGReading && parseInt(timeSenseLastSGV, 10) >= 5) {
-            console.log(`Last reading is from over ${parseInt(timeSenseLastSGV, 10)} minutes ago. Requesting data...`)
-            transfer.send(dataToSend)
+        if (!isRequestingBGReading && lastBgReadingMinAgo >= 5) {
+            console.log(`Last reading is from over ${lastBgReadingMinAgo} minutes ago. Requesting data...`)
+            transfer.send(copy(dataToSend, { reason: `bg reading over ${lastBgReadingMinAgo} min ago` }));
             isRequestingBGReading = true;
         }
 
@@ -241,10 +264,16 @@ function update() {
     }
     else {
         console.warn('NO DATA');
-        // setTimeout(function () {
-        //     isRequestingBGReading = true;
-        //     transfer.send(dataToSend);
-        // }, 2000);
+
+        if (transfer.socketState() === 'OPEN') {
+            setTimeout(function () {
+                isRequestingBGReading = true;
+                transfer.send(copy(dataToSend, { reason: `Initial transfer request from App` }));
+            }, 2000);
+        }
+        else {
+            updateSocketStatusLine()
+        }
 
         updateLayout(settings);
     }
@@ -380,45 +409,45 @@ function setTextColor(color) {
 
 
 goToLargeGraph.onclick = (e) => {
-    //console.log("goToLargeGraph Activated!");
     vibration.start('bump');
-    largeGraphView.style.display = 'inline';
-    main.style.display = 'none';
+    show(largeGraphView);
+    hide(main);
 }
 
 exitLargeGraph.onclick = (e) => {
-    //console.log("exitLargeGraph Activated!");
     vibration.start('bump');
-    largeGraphView.style.display = 'none';
-    main.style.display = 'inline';
+    hide(largeGraphView);
+    show(main);
 }
 
 timeElement.onclick = (e) => {
     console.log("FORCE Activated!");
-    transfer.send(dataToSend)
+    transfer.send(copy(dataToSend, { reason: 'force refresh' }));
     vibration.start('bump');
-    arrows.href = '../resources/img/arrows/loading.png';
-    largeGraphArrows.href = '../resources/img/arrows/loading.png';
-    alertArrows.href = '../resources/img/arrows/loading.png';
+
+    const loadingIcon = '../resources/img/arrows/loading.png'
+    arrows.href = loadingIcon;
+    largeGraphArrows.href = loadingIcon;
+    alertArrows.href = loadingIcon;
 }
-
-
-// wait 2 seconds
-// setTimeout(function () {
-//     console.info('Initial transfer.send after application start')
-//     transfer.send(dataToSend);
-// }, 1500);
-
-// setInterval(function () {
-//     console.info('Periodic transfer.send every 3min')
-//     transfer.send(dataToSend);
-// }, 180000);
 
 me.onunload = () => {
     console.log('App -> onunload event')
     clearInterval(updateIntervalId)
 }
 
+function copy(mainObj, extraObj) {
+    let objCopy = {};
+    let key;
+
+    for (key in mainObj) {
+        objCopy[key] = mainObj[key];
+    }
+    for (key in extraObj) {
+        objCopy[key] = extraObj[key]
+    }
+    return objCopy;
+}
 
 //<div>Icons made by <a href="http://www.freepik.com" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/designerz-base" title="Designerz Base">Designerz Base</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/twitter" title="Twitter">Twitter</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>
 

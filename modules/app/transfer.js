@@ -13,30 +13,64 @@
 import * as messaging from "messaging";
 import { me } from "appbit";
 
-export default class transfer {
+class Transfer {
     constructor() {
-        messaging.peerSocket.onopen = () => {
+        this.handleOpen = function(){};
+        this.handleClose = function(){};
+        this.handleError = function(){};
+        this.handleMessageSent = function(){};
+        this.handleOnMessageReceived = function(){};
+
+        messaging.peerSocket.onopen = evt => {
             console.log('App -> messaging -> socket open');
+            this.handleOpen(evt)
         }
         messaging.peerSocket.onclose = evt => {
             console.log(`App -> messaging -> socket close: ${evt.reason} [code: ${evt.code}] wasClean: ${evt.wasClean}`);
+            this.handleClose(evt)
         }
         messaging.peerSocket.onerror = evt => {
             console.log(`App -> messaging -> socket error: ${evt.message} [code: ${evt.code}]`);
+            this.handleError(evt)
         }
+        messaging.peerSocket.onmessage = evt => {
+            console.log('App -> messaging -> onmessage from companion: ' + JSON.stringify(evt.data));
+            this.handleOnMessageReceived(evt);
+        }
+    }
+
+    onOpen(callback) { 
+        this.handleOpen = callback;
+        return this;
+    }
+
+    onClose(callback) { 
+        this.handleClose = callback;
+        return this;
+    }
+
+    onError(callback) { 
+        this.handleError = callback;
+        return this;
+    }
+
+    onMessageReceived(callback) { 
+        this.handleOnMessageReceived = callback;
+        return this;
+    }
+
+    onMessageSent(callback) {
+        this.handleMessageSent = callback;
+        return this;
     }
 
     // Send data
     send(data) {
-        const isOpen = messaging.peerSocket.readyState === messaging.peerSocket.OPEN;
-        const isClosed = messaging.peerSocket.readyState === messaging.peerSocket.CLOSED;
-        const stateText = isOpen ? 'OPEN' : (isClosed ? 'CLOSED' : 'unknown');
+        console.log(`App -> messaging -> send [${this.socketState()}]`)
 
-        console.log(`App -> messaging -> send [${stateText}]`)
-
-        // if (isOpen) {
         try {
-            messaging.peerSocket.send({ command: 'forceCompanionTransfer', data: data });
+            messaging.peerSocket.send({ cmd: 'forceCompanionTransfer', data });
+            this.handleMessageSent()
         }
         catch (err) {
             console.error(err)
@@ -45,29 +79,13 @@ export default class transfer {
                 //me.exit();
             }
         }
-        //}
     }
-};
 
+    socketState() {
+        const isOpen = messaging.peerSocket.readyState === messaging.peerSocket.OPEN;
+        const isClosed = messaging.peerSocket.readyState === messaging.peerSocket.CLOSED;
+        return isOpen ? 'OPEN' : (isClosed ? 'CLOSED' : 'WAIT');
+    }
+}
 
-// Events
-
-// // Listen for the onopen event
-// messaging.peerSocket.onopen = function() {
-//   // Fetch weather when the connection opens
-//   fetchWeather();
-// }
-
-// Listen for messages from the companion
-// messaging.peerSocket.onmessage = function(evt) {
-//   if (evt.data) {
-//   console.log("The temperature is: " + evt.data.temperature);
-//   }
-// }
-
-// // Listen for the onerror event
-// messaging.peerSocket.onerror = function(err) {
-//   // Handle any errors
-//   console.log("Connection error: " + err.code + " - " + err.message);
-// }
-
+export let transfer = new Transfer()

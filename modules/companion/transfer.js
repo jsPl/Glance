@@ -16,8 +16,11 @@ import * as messaging from "messaging";
 
 const FILE_TRANSFER_MAX_RETRIES = 5;
 
-export default class transfer {
+class Transfer {
     constructor() {
+        this.handleOnMessage = function(){};
+        this.handleMessageSent = function(){};
+
         messaging.peerSocket.onopen = () => {
             console.log('Companion -> messsaging -> socket open');
         }
@@ -27,10 +30,24 @@ export default class transfer {
         messaging.peerSocket.onerror = evt => {
             console.log(`Companion -> messaging -> socket error: ${evt.message} [code: ${evt.code}]`);
         }
+        messaging.peerSocket.onmessage = evt => {
+            console.log('Companion -> messaging -> onmessage from app: ' + JSON.stringify(evt.data));
+            this.handleOnMessage(evt);
+        }
+    }
+
+    onMessage(callback) { 
+        this.handleOnMessage = callback;
+        return this;
+    }
+
+    onMessageSent(callback) {
+        this.handleMessageSent = callback;
+        return this;
     }
 
     // Send data to the watchface
-    send(data, retry = 0) {
+    sendFile(data, retry = 0) {
         const filename = 'response2.json';
         if (retry > 0) {
             console.log(`Companion -> File transfer -> retrying ${retry}/${FILE_TRANSFER_MAX_RETRIES}`)
@@ -52,6 +69,20 @@ export default class transfer {
             })
     }
 
+    sendMessage(data) {
+        console.log(`Companion -> messaging -> send [${this.socketState()}]`)
+
+        if (this.socketState() === 'OPEN') {
+            try {
+                messaging.peerSocket.send(data);
+                this.handleMessageSent()
+            }
+            catch (err) {
+                console.error(err)
+            }
+        }
+    }
+
     cancel() {
         outbox.enumerate()
             .then(fileTransfers => {
@@ -63,4 +94,12 @@ export default class transfer {
                 })
             })
     }
+
+    socketState() {
+        const isOpen = messaging.peerSocket.readyState === messaging.peerSocket.OPEN;
+        const isClosed = messaging.peerSocket.readyState === messaging.peerSocket.CLOSED;
+        return isOpen ? 'OPEN' : (isClosed ? 'CLOSED' : 'WAIT');
+    }
 }
+
+export let transfer = new Transfer()
