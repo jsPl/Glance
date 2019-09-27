@@ -25,6 +25,7 @@ import { me } from "appbit";
 import { $, hide, show } from '../modules/app/dom';
 import { heartRateSensor, bodyPresenceSensor } from '../modules/app/sensors';
 import { appSettings } from '../modules/app/app-settings';
+import { shallowObjectCopy } from '../common';
 import Clock from '../modules/app/clock';
 
 const dateTime = new DateTime();
@@ -157,19 +158,24 @@ function updateSocketStatusLine(code = '') {
     largeGraphStatusLine.text = `socket: ${transfer.socketState()}${code !== '' ? ' ' + code : ''}`;
 }
 
-transfer.onOpen(function (evt) {
-    updateSocketStatusLine()
-}).onClose(function (evt) {
-    updateSocketStatusLine()
-}).onError(function (evt) {
-    updateSocketStatusLine('[err]')
-}).onMessageSent(function () {
-    updateSocketStatusLine('[>>]')
-}).onMessageReceived(function (evt) {
-    if (evt.data.cmd === 'BG_READING_MATCH') {
-        updateSocketStatusLine('[=]');
-    }
-});
+transfer
+    .onOpen(function (evt) {
+        updateSocketStatusLine()
+    })
+    .onClose(function (evt) {
+        updateSocketStatusLine()
+    })
+    .onError(function (evt) {
+        updateSocketStatusLine('[err]')
+    })
+    .onMessageSent(function () {
+        updateSocketStatusLine('[>>]')
+    })
+    .onMessageReceived(function (evt) {
+        if (evt.data.cmd === 'BG_READING_MATCH') {
+            updateSocketStatusLine('[=]');
+        }
+    });
 
 bodyPresenceSensor.start();
 
@@ -241,7 +247,7 @@ function update() {
 
         if (!isRequestingBGReading && lastBgReadingMinAgo >= 5) {
             console.log(`Last reading is from over ${lastBgReadingMinAgo} minutes ago. Requesting data...`)
-            transfer.send(copy(dataToSend, { reason: `bg reading over ${lastBgReadingMinAgo} min ago` }));
+            transfer.send(shallowObjectCopy(dataToSend, { reason: `bg reading over ${lastBgReadingMinAgo} min ago` }));
             isRequestingBGReading = true;
         }
 
@@ -268,7 +274,7 @@ function update() {
         if (transfer.socketState() === 'OPEN') {
             setTimeout(function () {
                 isRequestingBGReading = true;
-                transfer.send(copy(dataToSend, { reason: `Initial transfer request from App` }));
+                transfer.send(shallowObjectCopy(dataToSend, { reason: `Initial transfer request from App` }));
             }, 2000);
         }
         else {
@@ -422,7 +428,7 @@ exitLargeGraph.onclick = (e) => {
 
 timeElement.onclick = (e) => {
     console.log("FORCE Activated!");
-    transfer.send(copy(dataToSend, { reason: 'force refresh' }));
+    transfer.send(shallowObjectCopy(dataToSend, { reason: 'force refresh' }));
     vibration.start('bump');
 
     const loadingIcon = '../resources/img/arrows/loading.png'
@@ -434,19 +440,6 @@ timeElement.onclick = (e) => {
 me.onunload = () => {
     console.log('App -> onunload event')
     clearInterval(updateIntervalId)
-}
-
-function copy(mainObj, extraObj) {
-    let objCopy = {};
-    let key;
-
-    for (key in mainObj) {
-        objCopy[key] = mainObj[key];
-    }
-    for (key in extraObj) {
-        objCopy[key] = extraObj[key]
-    }
-    return objCopy;
 }
 
 //<div>Icons made by <a href="http://www.freepik.com" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/designerz-base" title="Designerz Base">Designerz Base</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/twitter" title="Twitter">Twitter</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>

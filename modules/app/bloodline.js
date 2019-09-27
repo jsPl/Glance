@@ -10,11 +10,8 @@
  *
  * ------------------------------------------------
  */
-
-
-
-import { me as device } from "device";
 import document from "document";
+import { mmol } from "../../common";
 
 let highNumber = document.getElementById("high");
 let lowNumber = document.getElementById("low");
@@ -189,16 +186,4 @@ export default class bloodline {
         }
         reverseBloodsugars.reverse();
     }
-};
-
-// converts a mg/dL to mmoL
-function mmol(bg, roundToHundredths) {
-    let mmolBG = (Math.round((bg / 18) * 10) / 10).toFixed(1);
-    return mmolBG;
-}
-
-// converts mmoL to  mg/dL 
-function mgdl(bg) {
-    let mgdlBG = (Math.round(bg * 18.018).toFixed(0));
-    return mgdlBG;
 }

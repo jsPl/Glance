@@ -10,17 +10,9 @@
  *
  * ------------------------------------------------
  */
-
-
 import document from "document";
-import {
-	vibration
-} from "haptics";
-import Transfer from "./transfer.js";
-
+import { vibration } from "haptics";
 import DateTime from "./dateTime.js";
-
-//const transfer = new Transfer();
 
 let sgv = document.getElementById("sgv");
 let largeGraphsSgv = document.getElementById("largeGraphsSgv");
@@ -173,7 +165,6 @@ export default class alerts {
 
 	}
 	stop() {
-		console.log('app - Alerts - stop()')
 		vibration.stop();
 	}
 };

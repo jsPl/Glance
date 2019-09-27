@@ -1,6 +1,6 @@
 import { peerSocket } from 'messaging';
 
-export const defaults = {
+export const defaultSettings = {
     url: 'http://127.0.0.1:17580/sgv.json',
     extraDataUrl: null,
     dataSource: 'xdrip',
@@ -36,4 +36,28 @@ export const socketCodes = {
     [peerSocket.BUFFER_FULL]: 'BUFFER_FULL',
     [peerSocket.OPEN]: 'OPEN',
     [peerSocket.CLOSED]: 'CLOSE'
+}
+
+export function shallowObjectCopy(srcObj, props) {
+    let objCopy = {};
+    let key;
+
+    for (key in srcObj) {
+        objCopy[key] = srcObj[key];
+    }
+    for (key in props) {
+        objCopy[key] = props[key]
+    }
+    return objCopy;
+}
+
+// converts a mg/dL to mmoL
+export function mmol(bg) {
+    return (Math.round((bg / 18) * 10) / 10).toFixed(1);
+}
+
+// converts mmoL to  mg/dL 
+export function mgdl(bg) {
+    let mgdlBG = Math.round(bg * 18.018).toFixed(0);
+    return mgdlBG;
 }

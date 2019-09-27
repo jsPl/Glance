@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import { defaults } from '../../common';
+import { defaultSettings } from '../../common';
 
 const filename = 'settings.json';
 
@@ -26,7 +26,7 @@ class AppSettings {
         }
         else {
             console.log(`App -> Settings -> readFromFilesystemOrDefaults: get default settings`)
-            return defaults;
+            return defaultSettings;
         }
     }
 }

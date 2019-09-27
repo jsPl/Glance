@@ -130,7 +130,7 @@
 
 #socketMainStatusLine {
   x: 3%;
-  y: 60%;
+  y: 60%-5;
 }
 
 #steps {
