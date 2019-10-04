@@ -163,6 +163,7 @@ transfer
         updateSocketStatusLine()
     })
     .onClose(function (evt) {
+        isRequestingBGReading = false;
         updateSocketStatusLine()
     })
     .onError(function (evt) {
@@ -186,11 +187,17 @@ heartRateSensor.onReading(function (data) {
 
 update()
 const updateIntervalId = setInterval(update, 20000);
+let pingCompanionIntervalId;
 
 inbox.onnewfile = () => {
     console.log(`App -> New file!`);
     isRequestingBGReading = false;
     let fileName;
+
+    if (!data) {
+        // Clear pinging companion when got first data
+        clearInterval(pingCompanionIntervalId);
+    }
 
     while (fileName = inbox.nextFile()) {
         data = fs.readFileSync(fileName, "cbor");
@@ -213,7 +220,10 @@ function update() {
     };
 
     if (data) {
-        settings = data.settings;
+        if (data.settings) {
+            settings = data.settings;
+        }
+
         // bloodsugars
         let currentBgFromBloodSugars = getFistBgNonpredictiveBG(data.bloodSugars.bgs);
 
@@ -247,7 +257,7 @@ function update() {
 
         if (!isRequestingBGReading && lastBgReadingMinAgo >= 5) {
             console.log(`Last reading is from over ${lastBgReadingMinAgo} minutes ago. Requesting data...`)
-            transfer.send(shallowObjectCopy(dataToSend, { reason: `bg reading over ${lastBgReadingMinAgo} min ago` }));
+            transfer.sendMessage(shallowObjectCopy(dataToSend, { reason: `bg reading over ${lastBgReadingMinAgo} min ago` }));
             isRequestingBGReading = true;
         }
 
@@ -271,15 +281,17 @@ function update() {
     else {
         console.warn('NO DATA');
 
-        if (transfer.socketState() === 'OPEN') {
-            setTimeout(function () {
-                isRequestingBGReading = true;
-                transfer.send(shallowObjectCopy(dataToSend, { reason: `Initial transfer request from App` }));
-            }, 2000);
-        }
-        else {
-            updateSocketStatusLine()
-        }
+        pingCompanionIntervalId = setInterval(function () {
+            if (transfer.socketState() === 'OPEN') {
+                // Socket is open but no file received from companion yet.
+                // Do nothing.
+            }
+            else {
+                // Try to wake up companion with file transfer
+                transfer.sendFile({ ping: Date.now() })
+                updateSocketStatusLine('[FT]')
+            }
+        }, 5000)
 
         updateLayout(settings);
     }
@@ -428,7 +440,8 @@ exitLargeGraph.onclick = (e) => {
 
 timeElement.onclick = (e) => {
     console.log("FORCE Activated!");
-    transfer.send(shallowObjectCopy(dataToSend, { reason: 'force refresh' }));
+    transfer.sendMessage(shallowObjectCopy(dataToSend, { reason: 'force refresh' }));
+    //transfer.sendFile({ ping: Date.now() })
     vibration.start('bump');
 
     const loadingIcon = '../resources/img/arrows/loading.png'

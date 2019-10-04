@@ -1,4 +1,4 @@
-import { peerSocket } from 'messaging';
+import { peerSocket, CloseCode } from 'messaging';
 
 export const defaultSettings = {
     url: 'http://127.0.0.1:17580/sgv.json',
@@ -35,7 +35,8 @@ export const socketCodes = {
     [peerSocket.SOCKET_ERROR]: 'ERROR',
     [peerSocket.BUFFER_FULL]: 'BUFFER_FULL',
     [peerSocket.OPEN]: 'OPEN',
-    [peerSocket.CLOSED]: 'CLOSE'
+    [peerSocket.CLOSED]: 'CLOSE',
+    [CloseCode.CONNECTION_LOST]: 'CONNECTION_LOST'
 }
 
 export function shallowObjectCopy(srcObj, props) {

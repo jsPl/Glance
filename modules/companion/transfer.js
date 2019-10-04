@@ -10,7 +10,7 @@
  *
  * ------------------------------------------------
  */
-import { outbox } from "file-transfer";
+import { outbox, inbox } from "file-transfer";
 import { encode } from 'cbor';
 import * as messaging from "messaging";
 import { socketCodes } from '../../common';
@@ -18,23 +18,29 @@ import { socketCodes } from '../../common';
 const FILE_TRANSFER_MAX_RETRIES = 5;
 
 class Transfer {
+    socketClosedCleanly;
+
     constructor() {
         this.handleOnMessage = function () { };
         this.handleMessageSent = function () { };
 
         messaging.peerSocket.onopen = () => {
             console.log(`Companion -> messaging -> socket [OPEN]`);
+            this.socketClosedCleanly = undefined;
         }
         messaging.peerSocket.onclose = evt => {
-            console.log(`Companion -> messaging -> socket [${socketCodes[evt.code]}]: ${evt.reason} wasClean: ${evt.wasClean}`);
+            console.log(`Companion -> messaging -> socket [CLOSE], code: ${evt.code} ${socketCodes[evt.code]}, reason: ${evt.reason}, wasClean: ${evt.wasClean}`);
+            this.socketClosedCleanly = evt.wasClean;
         }
         messaging.peerSocket.onerror = evt => {
-            console.log(`Companion -> messaging -> socket [${socketCodes[evt.code]}]: ${evt.message} [code: ${evt.code}]`);
+            console.log(`Companion -> messaging -> socket [ERROR], code: ${evt.code} ${socketCodes[evt.code]}, message: ${evt.message}`);
         }
         messaging.peerSocket.onmessage = evt => {
             console.log('Companion -> messaging -> onmessage from app: ' + JSON.stringify(evt.data));
             this.handleOnMessage(evt);
         }
+
+        inbox.addEventListener('newfile', this.processIncomingFiles);
     }
 
     onMessage(callback) {
@@ -96,8 +102,24 @@ class Transfer {
             })
     }
 
+    enumerate() {
+        return outbox.enumerate()
+    }
+
     socketState() {
         return socketCodes[messaging.peerSocket.readyState] || '?'
+    }
+
+    getSocketClosedCleanly() {
+        return this.socketClosedCleanly || '?';
+    }
+
+    async processIncomingFiles() {
+        let file;
+        while ((file = await inbox.pop())) {
+            const payload = await file.cbor();
+            console.log(`Companion -> File transfer -> Inbox: ${JSON.stringify(payload)}`);
+        }
     }
 }
 

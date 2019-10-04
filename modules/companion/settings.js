@@ -15,7 +15,7 @@ import { defaultSettings, mmol, mgdl } from "../../common";
 
 export default class settings {
     get(dataReceivedFromWatch) {
-        let queryParms = '?count=47';
+        let queryParms = '?count=47&brief_mode=y';
         let dataSource = defaultSettings.dataSource;
 
         if (settingsStorage.getItem('dataSource')) {

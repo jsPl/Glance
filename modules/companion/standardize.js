@@ -30,29 +30,25 @@ export default class standardize {
 		let upbat = '';
 		let sage = ''
 
-		if (bgs && !data.error && data && bgs !== 'undefined' && Array.isArray(bgs) && bgs.length > 0) {
+		if (bgs && data && !data.error && bgs !== 'undefined' && Array.isArray(bgs) && bgs.length > 0) {
 			if (settings.dataSource === 'xdrip' || settings.dataSource === 'custom') {
 				// xdrip using the sgv endpoint still
-				if (Array.isArray(bgs)) {
-					bgs[0].datetime = bgs[0].date;
-					bgs[0].bgdelta = bgs[0].sgv - bgs[1].sgv; //element.delta;
-				}
-				else {
-					bgs = [];
-				}
+				bgs[0].datetime = bgs[0].date;
+				bgs[0].bgdelta = bgs[0].sgv - bgs[1].sgv;
 			}
 
 			// Look for current non Predictive bg and not the last 5 predictions
 			// this works because only the current bg has a delta so we can filter for it
-			let nonPredictiveBg = bgs.filter(bg => bg.bgdelta)[0];
+			//let nonPredictiveBg = bgs.filter(bg => bg.bgdelta)[0];
+			const nonPredictiveBg = bgs[0]; //bgs.filter(bg => bg.bgdelta)[0];
 
-			let hasFoundFirstDelta = false;
-			bgs.forEach((bg) => {
-				if (bg.bgdelta != null && !hasFoundFirstDelta) {
-					nonPredictiveBg = bg;
-					hasFoundFirstDelta = true;
-				}
-			})
+			// let hasFoundFirstDelta = false;
+			// bgs.forEach((bg) => {
+			// 	if (bg.bgdelta != null && !hasFoundFirstDelta) {
+			// 		nonPredictiveBg = bg;
+			// 		hasFoundFirstDelta = true;
+			// 	}
+			// })
 
 			// Look at the data that we are getting and if the SGV is below 25 we know the unit type is mmol
 			if (nonPredictiveBg.sgv < 25) {

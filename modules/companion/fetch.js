@@ -13,16 +13,22 @@
 
 export default class messaging {
     //Fetch data from an API endpoint and return a promise
-    async get(url) {
+    async get(url, params) {
         const trimmedURL = url.replace(/ /g, "");
-        //logs.add('Line 16: companion - fetch - get() ' + trimmedURL)
+
+        if (params) {
+            const urlObj = new URL(trimmedURL);
+            Object.entries(params).forEach(([key, value]) => urlObj.searchParams.set(key, value));
+            trimmedURL = urlObj.toString();
+        }
+
         console.log('Companion -> fetch: get data from ' + trimmedURL);
 
         return await fetch(trimmedURL)
             .then(handleResponse)
             .then(data => {
                 const txt = Array.isArray(data) && data.length > 0 ?
-                    'svg: ' + data[0].sgv + ' time: ' + data[0].date : '';
+                    'sgv: ' + data[0].sgv + ' time: ' + data[0].date : '';
 
                 console.log(`Companion -> fetch: got data ${txt}`);
                 return data;

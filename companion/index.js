@@ -32,12 +32,22 @@ transfer.onMessage(function (evt) {
     if (evt.data.cmd === 'forceCompanionTransfer') {
         dataReceivedFromWatch = evt.data.data;
         sendData()
+
+        // if (dataReceivedFromWatch.reason === 'Initial transfer request from App') {
+        //     transfer.enumerate().then(fileTransfers => {
+        //         //console.log(`Panding transfers: ${fileTransfers.length}`)
+        //         if (fileTransfers.length === 0) {
+        //             sendData()
+        //         }
+        //     })
+        // }
+        // else {
+        //     sendData()
+        // }
     }
 })
 
-async function sendData() {
-    //const store = settings.get(dataReceivedFromWatch);
-
+async function sendData({ settingsChanged = false } = {}) {
     // Get SGV data
     let bloodsugars = await fetch.get(store.url);
     let extraData = null;
@@ -49,9 +59,9 @@ async function sendData() {
     const bgReading = Array.isArray(bloodsugars) && bloodsugars.length > 0 ?
         bloodsugars[0] : {};
 
-    if (dataReceivedFromWatch
-        && dataReceivedFromWatch.lastBgTime === bgReading.date
-        && dataReceivedFromWatch.reason !== 'force refresh') {
+    const isBgReadingMatch = dataReceivedFromWatch && dataReceivedFromWatch.lastBgTime === bgReading.date;
+
+    if (isBgReadingMatch && dataReceivedFromWatch.reason !== 'force refresh') {
         console.log(`Companion -> sendData [SKIPPING], last bg time on watch match phone reading: ${bgReading.date}`)
         setTimeout(sendData, 30 * SECOND);
         transfer.sendMessage({ cmd: 'BG_READING_MATCH' })
@@ -60,7 +70,7 @@ async function sendData() {
 
     const dataToSend = {
         bloodSugars: standardize.bloodsugars(bloodsugars, extraData, store),
-        settings: standardize.settings(store)
+        settings: settingsChanged && standardize.settings(store) || null
     }
     transfer.sendFile(dataToSend);
 }
@@ -68,10 +78,10 @@ async function sendData() {
 settingsStorage.onchange = function ({ key, oldValue, newValue }) {
     console.log(`Companion -> settingsStorage -> change [${key}]: ${oldValue} -> ${newValue}`)
     store = settings.get(dataReceivedFromWatch);
-    sendData();
+    sendData({ settingsChanged: true });
 }
 
-me.wakeInterval = 5 * MINUTE;
+//me.wakeInterval = 5 * MINUTE;
 
 if (me.launchReasons.wokenUp) {
     // The companion started due to a periodic timer
@@ -99,12 +109,29 @@ me.onunload = () => {
 }
 
 app.onreadystatechange = () => {
-    console.log(`Companion -> app.onreadystatechange [${device.modelName}] ${app.readyState}`);
+    let txt = `Companion -> App.onreadystatechange [${device.modelName}] ${app.readyState}`;
 
     if (app.readyState === 'started') {
-        console.log(`Companion -> app.onreadystatechange [${app.readyState}] -> sendData()`);
-        sendData()
+        txt += ' -> sendData()';
+        sendData();
+        me.wakeInterval = 5 * MINUTE;
     }
     else if (app.readyState === 'stopped') {
+        if (transfer.getSocketClosedCleanly() === true) {
+            // TODO disable wakeInterval only of watch is switched off (if possible to determine)
+            me.wakeInterval = undefined;
+        }
+        else {
+            txt += `: socket wasn't closed cleanly`
+        }
     }
+    console.log(txt);
+}
+
+transfer.processIncomingFiles()
+
+if (me.host.app.name === 'unknown') {
+    // Running on Simulator
+    console.log(`Companion -> Running on Simulator`)
+    setTimeout(sendData, 1000)
 }

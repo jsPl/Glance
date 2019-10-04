@@ -49,7 +49,7 @@ export default class dateTime {
 
         let hh = timeNow.getHours();
         let mm = timeNow.getMinutes();
-        let ss = timeNow.getSeconds();
+        //let ss = timeNow.getSeconds();
 
         if (!is24h) { // 12h
             let formatAMPM = (hh >= 12 ? 'PM' : 'AM');

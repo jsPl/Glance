@@ -11,7 +11,9 @@
  * ------------------------------------------------
  */
 import * as messaging from "messaging";
+import { outbox } from "file-transfer";
 import { me } from "appbit";
+import { encode } from 'cbor';
 import { socketCodes } from '../../common';
 
 class Transfer {
@@ -27,12 +29,12 @@ class Transfer {
             this.handleOpen(evt)
         }
         messaging.peerSocket.onclose = evt => {
-            console.log(`App -> messaging -> socket [${socketCodes[evt.code]}]: ${evt.reason} wasClean: ${evt.wasClean}`);
+            console.log(`App -> messaging -> socket [CLOSE], code: ${evt.code} ${socketCodes[evt.code]}, reason: ${evt.reason}, wasClean: ${evt.wasClean}`);
             this.handleClose(evt)
         }
         messaging.peerSocket.onerror = evt => {
-            console.log(`App -> messaging -> socket [${socketCodes[evt.code]}]: ${evt.message} [code: ${evt.code}]`);
-            this.handleError(evt)
+            console.log(`App -> messaging -> socket [ERROR], code: ${evt.code} ${socketCodes[evt.code]}, message: ${evt.message}`);
+             this.handleError(evt)
         }
         messaging.peerSocket.onmessage = evt => {
             console.log('App -> messaging -> onmessage from companion: ' + JSON.stringify(evt.data));
@@ -65,8 +67,24 @@ class Transfer {
         return this;
     }
 
-    // Send data
-    send(data) {
+    // Send data by file-transfer
+    sendFile(data, filename = 'ft-from-app') {
+        console.log(`App -> File transfer -> ${filename} [enqueueing]`)
+
+        outbox.enqueue(filename, encode(data))
+            .then(ft => {
+                console.log(`App -> File transfer -> ${ft.name} [${ft.readyState}]`);
+                ft.onchange = evt => {
+                    console.log(`App -> File transfer -> ${ft.name} [${ft.readyState}]`)
+                }
+            })
+            .catch(error => {
+                console.log(`App -> File transfer -> Error: Failed to queue ${filename}: ${error}`);
+            })
+    }
+
+    // Send data by socket
+    sendMessage(data) {
         console.log(`App -> messaging -> send [${this.socketState()}]`)
 
         try {
@@ -74,11 +92,7 @@ class Transfer {
             this.handleMessageSent()
         }
         catch (err) {
-            console.error(err)
-            if (isClosed) {
-                //console.log('Exiting due to socket CLOSED')
-                //me.exit();
-            }
+            console.error(err + ` Socket is ${this.socketState()}`)
         }
     }
 
