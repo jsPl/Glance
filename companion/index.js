@@ -28,9 +28,10 @@ const standardize = new Standardize();
 let dataReceivedFromWatch = null;
 let store = settings.get(dataReceivedFromWatch);
 
-transfer.onMessage(function (evt) {
-    if (evt.data.cmd === 'forceCompanionTransfer') {
-        dataReceivedFromWatch = evt.data.data;
+transfer.onMessageReceived(function ({ data }) {
+    const { cmd, payload } = data;
+    if (cmd === 'FORCE_COMPANION_TRANSFER') {
+        dataReceivedFromWatch = payload;
         sendData()
 
         // if (dataReceivedFromWatch.reason === 'Initial transfer request from App') {
@@ -45,7 +46,16 @@ transfer.onMessage(function (evt) {
         //     sendData()
         // }
     }
+    else if (cmd === 'XDRIP_ALERT_SNOOZE') {
+        snoozeXdripAlert()
+    }
 })
+
+async function snoozeXdripAlert() {
+    console.log(`Companion -> Snooze xDrip alert`)
+    await fetch.get(store.url, { tasker: 'snooze' });
+    transfer.sendMessage({ cmd: 'XDRIP_ALERT_SNOOZE_SUCCESS' })
+}
 
 async function sendData({ settingsChanged = false } = {}) {
     // Get SGV data

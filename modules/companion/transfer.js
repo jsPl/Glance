@@ -21,30 +21,36 @@ class Transfer {
     socketClosedCleanly;
 
     constructor() {
-        this.handleOnMessage = function () { };
+        this.handleOpen = function () { };
+        this.handleClose = function () { };
+        this.handleError = function () { };
         this.handleMessageSent = function () { };
+        this.handleOnMessageReceived = function () { };
 
-        messaging.peerSocket.onopen = () => {
+        messaging.peerSocket.onopen = evt => {
             console.log(`Companion -> messaging -> socket [OPEN]`);
             this.socketClosedCleanly = undefined;
+            this.handleOpen(evt)
         }
         messaging.peerSocket.onclose = evt => {
             console.log(`Companion -> messaging -> socket [CLOSE], code: ${evt.code} ${socketCodes[evt.code]}, reason: ${evt.reason}, wasClean: ${evt.wasClean}`);
             this.socketClosedCleanly = evt.wasClean;
+            this.handleClose(evt)
         }
         messaging.peerSocket.onerror = evt => {
             console.log(`Companion -> messaging -> socket [ERROR], code: ${evt.code} ${socketCodes[evt.code]}, message: ${evt.message}`);
+            this.handleError(evt)
         }
         messaging.peerSocket.onmessage = evt => {
             console.log('Companion -> messaging -> onmessage from app: ' + JSON.stringify(evt.data));
-            this.handleOnMessage(evt);
+            this.handleOnMessageReceived(evt);
         }
 
         inbox.addEventListener('newfile', this.processIncomingFiles);
     }
 
-    onMessage(callback) {
-        this.handleOnMessage = callback;
+    onMessageReceived(callback) {
+        this.handleOnMessageReceived = callback;
         return this;
     }
 
@@ -76,13 +82,13 @@ class Transfer {
             })
     }
 
-    sendMessage(data) {
+    sendMessage(data = { cmd: '', payload: {} }) {
         console.log(`Companion -> messaging -> send [${this.socketState()}]`)
 
         if (this.socketState() === 'OPEN') {
             try {
                 messaging.peerSocket.send(data);
-                this.handleMessageSent()
+                this.handleMessageSent(data)
             }
             catch (err) {
                 console.error(err)

@@ -6,6 +6,8 @@ const sensors = [];
 
 class Sensor {
     sensor = null;
+    on = false;
+
     constructor(SensorType) {
         if (SensorType) {
             this.sensor = new SensorType();
@@ -23,13 +25,29 @@ class Sensor {
         return this
     }
 
+    onActivate(callback) {
+        if (this.sensor) {
+            this.on = true;
+            this.sensor.addEventListener('activate', () => {
+                callback(this.sensor)
+            });
+        }
+        return this;
+    }
+
     start() {
-        this.sensor && this.sensor.start();
+        if (this.sensor) {
+            this.sensor.start();
+            this.on = true;
+        }
         return this;
     }
 
     stop() {
-        this.sensor && this.sensor.stop();
+        if (this.sensor) {
+            this.sensor.stop();
+            this.on = false;
+        }
         return this;
     }
 }

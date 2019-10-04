@@ -178,6 +178,10 @@
            <set href="#text" attributeName="text-anchor" to="middle" />
         </use>
 
+        <use id="xdripSnoozeBtn" href="#square-button" x="5" y="5" width="30%" fill="fb-red">
+            <set href="#text" attributeName="text-buffer" to="snooze" />
+        </use>
+
         <!-- End Graph -->
     </svg>   
 

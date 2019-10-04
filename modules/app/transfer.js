@@ -34,7 +34,7 @@ class Transfer {
         }
         messaging.peerSocket.onerror = evt => {
             console.log(`App -> messaging -> socket [ERROR], code: ${evt.code} ${socketCodes[evt.code]}, message: ${evt.message}`);
-             this.handleError(evt)
+            this.handleError(evt)
         }
         messaging.peerSocket.onmessage = evt => {
             console.log('App -> messaging -> onmessage from companion: ' + JSON.stringify(evt.data));
@@ -84,12 +84,12 @@ class Transfer {
     }
 
     // Send data by socket
-    sendMessage(data) {
+    sendMessage(data = { cmd: '', payload: {} }) {
         console.log(`App -> messaging -> send [${this.socketState()}]`)
 
         try {
-            messaging.peerSocket.send({ cmd: 'forceCompanionTransfer', data });
-            this.handleMessageSent()
+            messaging.peerSocket.send(data);
+            this.handleMessageSent(data)
         }
         catch (err) {
             console.error(err + ` Socket is ${this.socketState()}`)

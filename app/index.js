@@ -83,14 +83,12 @@ let predictedBg = $("predictedBg");
 const statusLine = $('status-line');
 const largeGraphStatusLine = $('largeGraphStatusLine');
 const socketMainStatusLine = $('socketMainStatusLine');
+const xdripSnoozeBtn = $('xdripSnoozeBtn');
 
 let settings = appSettings.readFromFilesystemOrDefaults();
 
-let dismissHighFor = settings.dismissHighFor;
-let dismissLowFor = settings.dismissLowFor;
-
 let data = null;
-let DISABLE_ALERTS = false;
+let ALERTS_SNOOZED = false;
 let isRequestingBGReading = false;
 
 // Data to send back to phone
@@ -105,35 +103,38 @@ dismiss.onclick = function (evt) {
     hide(popup);
     hide(popupTitle);
     vibration.stop();
-    DISABLE_ALERTS = true;
-    let currentBgFromBloodSugars = getFistBgNonpredictiveBG(data.bloodSugars.bgs);
+    ALERTS_SNOOZED = true;
+    let currentBgReading = getFistBgNonpredictiveBG(data.bloodSugars.bgs);
 
-    if (currentBgFromBloodSugars.sgv >= parseInt(settings.highThreshold)) {
-        console.log("HIGH " + dismissHighFor);
-        setTimeout(disableAlertsFalse, (dismissHighFor * 1000) * 60);
+    if (currentBgReading.sgv >= parseInt(settings.highThreshold)) {
+        console.log("HIGH " + settings.dismissHighFor);
+        setTimeout(disableAlertsFalse, (settings.dismissHighFor * 1000) * 60);
     }
     else {
-        // 15 mins 
-        console.log("LOW " + dismissLowFor);
-        setTimeout(disableAlertsFalse, (dismissLowFor * 1000) * 60);
+        console.log("LOW " + settings.dismissLowFor);
+        setTimeout(disableAlertsFalse, (settings.dismissLowFor * 1000) * 60);
     }
 }
 
+xdripSnoozeBtn.onclick = evt => {
+    console.log('App -> Snoozing xDrip alert')
+    transfer.sendMessage({ cmd: 'XDRIP_ALERT_SNOOZE' })
+}
+
 function disableAlertsFalse() {
-    DISABLE_ALERTS = false;
+    ALERTS_SNOOZED = false;
 }
 
 sgv.text = '---';
 rawbg.text = ''
 delta.text = '';
 largeGraphDelta.text = '';
-iob.text = '0.0';
-cob.text = '0.0';
-largeGraphIob.text = '0.0';
-largeGraphCob.text = '0.0';
+iob.text = '--';
+cob.text = '--';
+largeGraphIob.text = '--';
+largeGraphCob.text = '--';
 dateElement.text = '';
 timeOfLastSgv.text = '';
-//weather.text = '--';
 steps.text = '--';
 heart.text = '--';
 batteryPercent.text = '%';
@@ -141,6 +142,7 @@ bgColor.gradient.colors.c1 = settings.bgColor;
 largeGraphBgColor.gradient.colors.c1 = settings.bgColor;
 errorText.text = '';
 weather.text = '';
+
 hide(degreeIcon);
 hide(statusLine);
 show(largeGraphStatusLine)
@@ -160,6 +162,7 @@ function updateSocketStatusLine(code = '') {
 
 transfer
     .onOpen(function (evt) {
+        isRequestingBGReading = false;
         updateSocketStatusLine()
     })
     .onClose(function (evt) {
@@ -172,18 +175,32 @@ transfer
     .onMessageSent(function () {
         updateSocketStatusLine('[>>]')
     })
-    .onMessageReceived(function (evt) {
-        if (evt.data.cmd === 'BG_READING_MATCH') {
+    .onMessageReceived(function ({ data }) {
+        const { cmd } = data;
+        if (cmd === 'BG_READING_MATCH') {
             updateSocketStatusLine('[=]');
+        }
+        else if (cmd === 'XDRIP_ALERT_SNOOZE_SUCCESS') {
+            updateSocketStatusLine('[<<]')
         }
     });
 
-bodyPresenceSensor.start();
+bodyPresenceSensor
+    .onReading(function ({ present }) {
+        if (present) {
+            heartRateSensor.start()
+        }
+        else {
+            heartRateSensor.stop();
+            heart.text = '--';
+        }
+    }).start();
 
-heartRateSensor.onReading(function (data) {
-    //console.log(`bodyPresenceSensor.sensor.present = ${bodyPresenceSensor.sensor.present}`)
-    heart.text = bodyPresenceSensor.sensor.present ? data.heartRate : '--';
-}).start();
+heartRateSensor
+    .onReading(function ({ heartRate }) {
+        heart.text = heartRate ? heartRate : '--';
+    })
+    .start();
 
 update()
 const updateIntervalId = setInterval(update, 20000);
@@ -201,9 +218,12 @@ inbox.onnewfile = () => {
 
     while (fileName = inbox.nextFile()) {
         data = fs.readFileSync(fileName, "cbor");
+
         if (data.settings) {
+            // Settings changed
             //Object.keys(data.settings).forEach(key => console.log(`${key}: ${data.settings[key]}`))
             appSettings.writeToFilesystem(data.settings);
+            settings = data.settings;
         }
 
         updateSocketStatusLine('[<<]')
@@ -220,36 +240,33 @@ function update() {
     };
 
     if (data) {
-        if (data.settings) {
-            settings = data.settings;
-        }
-
         // bloodsugars
-        let currentBgFromBloodSugars = getFistBgNonpredictiveBG(data.bloodSugars.bgs);
+        let currentBgReading = getFistBgNonpredictiveBG(data.bloodSugars.bgs);
 
-        updateLayout(settings, currentBgFromBloodSugars)
+        updateLayout(currentBgReading)
 
-        console.warn(`GOT DATA epoch ${currentBgFromBloodSugars.datetime}, svg ${currentBgFromBloodSugars.currentbg}`);
-        dataToSend.lastBgTime = currentBgFromBloodSugars.datetime;
+        console.warn(`GOT DATA epoch ${currentBgReading.datetime}, sgv ${currentBgReading.currentbg}`);
+        dataToSend.lastBgTime = currentBgReading.datetime;
 
-        sgv.text = currentBgFromBloodSugars.currentbg;
-        largeGraphsSgv.text = currentBgFromBloodSugars.currentbg;
+        sgv.text = currentBgReading.currentbg;
+        largeGraphsSgv.text = currentBgReading.currentbg;
 
-        rawbg.text = currentBgFromBloodSugars.rawbg ? currentBgFromBloodSugars.rawbg + ' ' : '';
-        tempBasal.text = currentBgFromBloodSugars.tempbasal || '';
-        predictedBg.text = currentBgFromBloodSugars.predictedbg || '';
+        rawbg.text = currentBgReading.rawbg ? currentBgReading.rawbg + ' ' : '';
+        tempBasal.text = currentBgReading.tempbasal || '';
+        predictedBg.text = currentBgReading.predictedbg || '';
 
-        const timeSenseLastSGVData = dateTime.getTimeSenseLastSGV(currentBgFromBloodSugars.datetime);
+        const timeSenseLastSGVData = dateTime.getTimeSenseLastSGV(currentBgReading.datetime);
         timeOfLastSgv.text = timeSenseLastSGVData[0];
         largeGraphTimeOfLastSgv.text = timeSenseLastSGVData[0];
 
         let timeSenseLastSGV = timeSenseLastSGVData[1];
         const lastBgReadingMinAgo = parseInt(timeSenseLastSGV, 10);
-        // if DISABLE_ALERTS is true check if user is in range 
-        if (DISABLE_ALERTS && settings.resetAlertDismissal) {
-            if (lastBgReadingMinAgo < settings.staleDataAlertAfter && currentBgFromBloodSugars.direction != 'DoubleDown' && currentBgFromBloodSugars.direction != 'DoubleUp' && currentBgFromBloodSugars.loopstatus != 'Warning') { // Dont reset alerts for LOS, DoubleUp, doubleDown, Warning
-                if (currentBgFromBloodSugars.sgv > parseInt(settings.lowThreshold) && currentBgFromBloodSugars.sgv < parseInt(settings.highThreshold)) { // if the BG is between the threshold 
-                    console.error('here', DISABLE_ALERTS, lastBgReadingMinAgo)
+
+        // if ALERTS_SNOOZED check if user is in range 
+        if (ALERTS_SNOOZED && settings.resetAlertDismissal) {
+            if (lastBgReadingMinAgo < settings.staleDataAlertAfter && currentBgReading.direction != 'DoubleDown' && currentBgReading.direction != 'DoubleUp' && currentBgReading.loopstatus != 'Warning') { // Dont reset alerts for LOS, DoubleUp, doubleDown, Warning
+                if (currentBgReading.sgv > parseInt(settings.lowThreshold) && currentBgReading.sgv < parseInt(settings.highThreshold)) { // if the BG is between the threshold 
+                    console.error('here ' + ALERTS_SNOOZED + ' ' + lastBgReadingMinAgo)
                     disableAlertsFalse()
                 }
             }
@@ -257,24 +274,27 @@ function update() {
 
         if (!isRequestingBGReading && lastBgReadingMinAgo >= 5) {
             console.log(`Last reading is from over ${lastBgReadingMinAgo} minutes ago. Requesting data...`)
-            transfer.sendMessage(shallowObjectCopy(dataToSend, { reason: `bg reading over ${lastBgReadingMinAgo} min ago` }));
+            transfer.sendMessage({
+                cmd: 'FORCE_COMPANION_TRANSFER',
+                payload: shallowObjectCopy(dataToSend, { reason: `bg reading over ${lastBgReadingMinAgo} min ago` })
+            });
             isRequestingBGReading = true;
         }
 
-        alerts.check(currentBgFromBloodSugars, settings, DISABLE_ALERTS, timeSenseLastSGV);
-        errors.check(timeSenseLastSGV, currentBgFromBloodSugars.currentbg);
+        alerts.check(currentBgReading, settings, ALERTS_SNOOZED, timeSenseLastSGV);
+        errors.check(timeSenseLastSGV, currentBgReading.currentbg);
 
-        let deltaText = currentBgFromBloodSugars.bgdelta
+        let deltaText = currentBgReading.bgdelta
         // add Plus
         if (deltaText > 0) {
             deltaText = '+' + deltaText;
         }
         delta.text = deltaText + ' ' + settings.glucoseUnits;
         largeGraphDelta.text = deltaText + ' ' + settings.glucoseUnits;
-        largeGraphLoopStatus.text = currentBgFromBloodSugars.loopstatus;
+        largeGraphLoopStatus.text = currentBgReading.loopstatus;
 
-        arrows.href = '../resources/img/arrows/' + currentBgFromBloodSugars.direction + '.png'
-        largeGraphArrows.href = '../resources/img/arrows/' + currentBgFromBloodSugars.direction + '.png';
+        arrows.href = '../resources/img/arrows/' + currentBgReading.direction + '.png'
+        largeGraphArrows.href = '../resources/img/arrows/' + currentBgReading.direction + '.png';
 
         graph.update(data.bloodSugars.bgs, settings.highThreshold, settings.lowThreshold, settings);
     }
@@ -293,23 +313,13 @@ function update() {
             }
         }, 5000)
 
-        updateLayout(settings);
+        updateLayout();
     }
 
     isRequestingBGReading ? show(statusLine).text = 'sync' : hide(statusLine);
-
-    batteryLevel.width = batteryLevels.get().level;
-    batteryLevel.style.fill = batteryLevels.get().color;
-    batteryPercent.text = '' + batteryLevels.get().percent + '%';
 }
 
-function updateLayout(settings, currentBgFromBloodSugars = {}) {
-    //console.log('updateLayout currentBgFromBloodSugars = '  + JSON.stringify(currentBgFromBloodSugars));
-    //console.log('updateLayout settings = '  + JSON.stringify(settings));
-
-    dismissHighFor = settings.dismissHighFor;
-    dismissLowFor = settings.dismissLowFor;
-
+function updateLayout(currentBgReading = {}) {
     // colors
     bgColor.gradient.colors.c1 = settings.bgColor;
     bgColor.gradient.colors.c2 = settings.bgColorTwo;
@@ -322,24 +332,28 @@ function updateLayout(settings, currentBgFromBloodSugars = {}) {
     goToLargeGraph.style.display = settings.largeGraph ? 'inline' : 'none';
 
     // Layout options
-    updateIob(settings, currentBgFromBloodSugars);
-    updateCob(settings, currentBgFromBloodSugars);
-    updateSteps(settings, currentBgFromBloodSugars);
-    updateHeart(settings, currentBgFromBloodSugars);
+    updateIob(currentBgReading);
+    updateCob(currentBgReading);
+    updateSteps(currentBgReading);
+    updateHeart(currentBgReading);
+
+    batteryLevel.width = batteryLevels.get().level;
+    batteryLevel.style.fill = batteryLevels.get().color;
+    batteryPercent.text = '' + batteryLevels.get().percent + '%';
 }
 
-function updateIob(settings, currentBgFromBloodSugars) {
-    if (currentBgFromBloodSugars[settings.layoutOne] && settings.layoutOne != 'iob') {
-        iob.text = currentBgFromBloodSugars[settings.layoutOne];
+function updateIob(currentBgReading) {
+    if (currentBgReading[settings.layoutOne] && settings.layoutOne != 'iob') {
+        iob.text = currentBgReading[settings.layoutOne];
         hide(syringe);
         iob.x = 10;
     } else {
         iob.text = commas(userActivity.get().steps);
         show(syringe);
         iob.x = 35;
-        if (currentBgFromBloodSugars.iob && currentBgFromBloodSugars.iob != 0) {
-            iob.text = currentBgFromBloodSugars.iob + '';
-            largeGraphIob.text = currentBgFromBloodSugars.iob + '';
+        if (currentBgReading.iob && currentBgReading.iob != 0) {
+            iob.text = currentBgReading.iob + '';
+            largeGraphIob.text = currentBgReading.iob + '';
             show(syringe);
             show(largeGraphSyringe);
         } else {
@@ -351,18 +365,18 @@ function updateIob(settings, currentBgFromBloodSugars) {
     }
 }
 
-function updateCob(settings, currentBgFromBloodSugars) {
-    if (currentBgFromBloodSugars[settings.layoutTwo] && settings.layoutTwo != 'cob') {
-        cob.text = currentBgFromBloodSugars[settings.layoutTwo];
+function updateCob(currentBgReading) {
+    if (currentBgReading[settings.layoutTwo] && settings.layoutTwo != 'cob') {
+        cob.text = currentBgReading[settings.layoutTwo];
         hamburger.style.display = 'none';
         cob.x = 10;
     } else {
         cob.text = userActivity.get().heartRate;
         hamburger.style.display = 'inline';
         cob.x = 35;
-        if (currentBgFromBloodSugars.cob && currentBgFromBloodSugars.cob != 0) {
-            cob.text = currentBgFromBloodSugars.cob + '';
-            largeGraphCob.text = currentBgFromBloodSugars.cob + '';
+        if (currentBgReading.cob && currentBgReading.cob != 0) {
+            cob.text = currentBgReading.cob + '';
+            largeGraphCob.text = currentBgReading.cob + '';
             hamburger.style.display = "inline";
             largeGraphHamburger.style.display = "inline";
         } else {
@@ -375,9 +389,9 @@ function updateCob(settings, currentBgFromBloodSugars) {
 
 }
 
-function updateSteps(settings, currentBgFromBloodSugars) {
-    if (currentBgFromBloodSugars[settings.layoutThree] && settings.layoutThree != 'steps') {
-        steps.text = currentBgFromBloodSugars[settings.layoutThree];
+function updateSteps(currentBgReading) {
+    if (currentBgReading[settings.layoutThree] && settings.layoutThree != 'steps') {
+        steps.text = currentBgReading[settings.layoutThree];
         stepIcon.style.display = 'none';
         steps.x = 10;
     } else {
@@ -387,14 +401,13 @@ function updateSteps(settings, currentBgFromBloodSugars) {
     }
 }
 
-function updateHeart(settings, currentBgFromBloodSugars) {
-    if (currentBgFromBloodSugars[settings.layoutFour] && settings.layoutFour != 'heart') {
+function updateHeart(currentBgReading) {
+    if (currentBgReading[settings.layoutFour] && settings.layoutFour != 'heart') {
         //heart.text = currentBgFromBloodSugars[settings.layoutFour];
         hide(heartIcon)
         heart.x = 10;
     }
     else {
-        //heart.text = userActivity.get().heartRate || 'off';
         show(heartIcon)
         heart.x = 35;
     }
@@ -406,17 +419,10 @@ function commas(value) {
 
 /**
 * Get Fist BG that is not a predictive BG
-* @param {Array} bgs
-* @returns {Array}
 */
-function getFistBgNonpredictiveBG(bgs) {
-    return bgs.filter((bg) => {
-        if (bg.bgdelta || bg.bgdelta === 0) {
-            return true;
-        }
-    })[0];
+function getFistBgNonpredictiveBG(bgs = []) {
+    return bgs.filter(bg => bg.bgdelta || bg.bgdelta === 0)[0]
 }
-
 
 function setTextColor(color) {
     let domElemets = ['iob', 'cob', 'heart', 'steps', 'batteryPercent', 'date', 'delta', 'timeOfLastSgv', 'time', 'high', 'low', 'largeGraphHigh', 'largeGraphLow', 'largeGraphDelta', 'largeGraphTimeOfLastSgv', 'largeGraphIob', 'largeGraphCob', 'predictedBg', 'largeGraphTime', 'largeGraphLoopStatus', 'tempBasal'];
@@ -440,8 +446,10 @@ exitLargeGraph.onclick = (e) => {
 
 timeElement.onclick = (e) => {
     console.log("FORCE Activated!");
-    transfer.sendMessage(shallowObjectCopy(dataToSend, { reason: 'force refresh' }));
-    //transfer.sendFile({ ping: Date.now() })
+    transfer.sendMessage({
+        cmd: 'FORCE_COMPANION_TRANSFER',
+        payload: shallowObjectCopy(dataToSend, { reason: 'force refresh' })
+    });
     vibration.start('bump');
 
     const loadingIcon = '../resources/img/arrows/loading.png'

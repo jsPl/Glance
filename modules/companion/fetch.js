@@ -14,7 +14,7 @@
 export default class messaging {
     //Fetch data from an API endpoint and return a promise
     async get(url, params) {
-        const trimmedURL = url.replace(/ /g, "");
+        let trimmedURL = url.replace(/ /g, "");
 
         if (params) {
             const urlObj = new URL(trimmedURL);
