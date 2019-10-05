@@ -145,7 +145,7 @@ weather.text = '';
 
 hide(degreeIcon);
 hide(statusLine);
-show(largeGraphStatusLine)
+hide(largeGraphStatusLine)
 
 new Clock(function (evt) {
     const timeText = dateTime.getTime(settings.timeFormat, evt.date);
@@ -157,7 +157,7 @@ new Clock(function (evt) {
 
 function updateSocketStatusLine(code = '') {
     socketMainStatusLine.text = `${transfer.socketState()}${code !== '' ? ' ' + code : ''}`;
-    largeGraphStatusLine.text = `socket: ${transfer.socketState()}${code !== '' ? ' ' + code : ''}`;
+    //largeGraphStatusLine.text = `socket: ${transfer.socketState()}${code !== '' ? ' ' + code : ''}`;
 }
 
 transfer
@@ -211,8 +211,9 @@ inbox.onnewfile = () => {
     isRequestingBGReading = false;
     let fileName;
 
-    if (!data) {
-        // Clear pinging companion when got first data
+    // Clear pinging companion when got first data
+    if (pingCompanionIntervalId) {
+        console.log('Companion -> Incoming data: clearInterval for data request')
         clearInterval(pingCompanionIntervalId);
     }
 
@@ -274,11 +275,11 @@ function update() {
 
         if (!isRequestingBGReading && lastBgReadingMinAgo >= 5) {
             console.log(`Last reading is from over ${lastBgReadingMinAgo} minutes ago. Requesting data...`)
-            transfer.sendMessage({
+            const success = transfer.sendMessage({
                 cmd: 'FORCE_COMPANION_TRANSFER',
                 payload: shallowObjectCopy(dataToSend, { reason: `bg reading over ${lastBgReadingMinAgo} min ago` })
             });
-            isRequestingBGReading = true;
+            isRequestingBGReading = success;
         }
 
         alerts.check(currentBgReading, settings, ALERTS_SNOOZED, timeSenseLastSGV);
@@ -301,17 +302,24 @@ function update() {
     else {
         console.warn('NO DATA');
 
-        pingCompanionIntervalId = setInterval(function () {
-            if (transfer.socketState() === 'OPEN') {
-                // Socket is open but no file received from companion yet.
-                // Do nothing.
-            }
-            else {
-                // Try to wake up companion with file transfer
-                transfer.sendFile({ ping: Date.now() })
-                updateSocketStatusLine('[FT]')
-            }
-        }, 5000)
+        if (!pingCompanionIntervalId) {
+            console.log('Companion -> No data: setInterval for data request')
+
+            pingCompanionIntervalId = setInterval(function () {
+                if (transfer.socketState() === 'OPEN') {
+                    // Socket is open but no file received from companion yet.
+                    transfer.sendMessage({
+                        cmd: 'FORCE_COMPANION_TRANSFER',
+                        payload: shallowObjectCopy(dataToSend, { reason: 'Socket open but no SGV data transfered' })
+                    })
+                }
+                else {
+                    // Try to wake up companion with file transfer
+                    transfer.sendFile({ ping: Date.now() })
+                    updateSocketStatusLine('[FT]')
+                }
+            }, 5000)
+        }
 
         updateLayout();
     }
@@ -460,7 +468,8 @@ timeElement.onclick = (e) => {
 
 me.onunload = () => {
     console.log('App -> onunload event')
-    clearInterval(updateIntervalId)
+    clearInterval(updateIntervalId);
+    clearInterval(pingCompanionIntervalId);
 }
 
 //<div>Icons made by <a href="http://www.freepik.com" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/designerz-base" title="Designerz Base">Designerz Base</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/twitter" title="Twitter">Twitter</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>

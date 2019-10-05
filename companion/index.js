@@ -129,7 +129,9 @@ app.onreadystatechange = () => {
     else if (app.readyState === 'stopped') {
         if (transfer.getSocketClosedCleanly() === true) {
             // TODO disable wakeInterval only of watch is switched off (if possible to determine)
-            me.wakeInterval = undefined;
+            setTimeout(function () {
+                me.wakeInterval = undefined;
+            }, 20 * SECOND)
         }
         else {
             txt += `: socket wasn't closed cleanly`

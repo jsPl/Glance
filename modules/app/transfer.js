@@ -89,11 +89,13 @@ class Transfer {
 
         try {
             messaging.peerSocket.send(data);
-            this.handleMessageSent(data)
+            this.handleMessageSent(data);
+            return true
         }
         catch (err) {
             console.error(err + ` Socket is ${this.socketState()}`)
         }
+        return false
     }
 
     socketState() {

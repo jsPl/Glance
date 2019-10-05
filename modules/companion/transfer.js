@@ -83,8 +83,6 @@ class Transfer {
     }
 
     sendMessage(data = { cmd: '', payload: {} }) {
-        console.log(`Companion -> messaging -> send [${this.socketState()}]`)
-
         if (this.socketState() === 'OPEN') {
             try {
                 messaging.peerSocket.send(data);
@@ -93,6 +91,9 @@ class Transfer {
             catch (err) {
                 console.error(err)
             }
+        }
+        else {
+            console.log(`Companion -> messaging -> send [${this.socketState()}]`)
         }
     }
 
