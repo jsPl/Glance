@@ -214,7 +214,7 @@ inbox.onnewfile = () => {
     // Clear pinging companion when got first data
     if (pingCompanionIntervalId) {
         console.log('Companion -> Incoming data: clearInterval for data request')
-        clearInterval(pingCompanionIntervalId);
+        pingCompanionIntervalId = clearInterval(pingCompanionIntervalId);
     }
 
     while (fileName = inbox.nextFile()) {

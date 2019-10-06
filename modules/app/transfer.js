@@ -10,97 +10,17 @@
  *
  * ------------------------------------------------
  */
-import * as messaging from "messaging";
-import { outbox } from "file-transfer";
-import { me } from "appbit";
-import { encode } from 'cbor';
-import { socketCodes } from '../../common';
+import Transfer from '../../common/transfer';
 
-class Transfer {
+class AppTransfer extends Transfer {
     constructor() {
-        this.handleOpen = function () { };
-        this.handleClose = function () { };
-        this.handleError = function () { };
-        this.handleMessageSent = function () { };
-        this.handleOnMessageReceived = function () { };
-
-        messaging.peerSocket.onopen = evt => {
-            console.log(`App -> messaging -> socket [OPEN]`);
-            this.handleOpen(evt)
-        }
-        messaging.peerSocket.onclose = evt => {
-            console.log(`App -> messaging -> socket [CLOSE], code: ${evt.code} ${socketCodes[evt.code]}, reason: ${evt.reason}, wasClean: ${evt.wasClean}`);
-            this.handleClose(evt)
-        }
-        messaging.peerSocket.onerror = evt => {
-            console.log(`App -> messaging -> socket [ERROR], code: ${evt.code} ${socketCodes[evt.code]}, message: ${evt.message}`);
-            this.handleError(evt)
-        }
-        messaging.peerSocket.onmessage = evt => {
-            console.log('App -> messaging -> onmessage from companion: ' + JSON.stringify(evt.data));
-            this.handleOnMessageReceived(evt);
-        }
-    }
-
-    onOpen(callback) {
-        this.handleOpen = callback;
-        return this;
-    }
-
-    onClose(callback) {
-        this.handleClose = callback;
-        return this;
-    }
-
-    onError(callback) {
-        this.handleError = callback;
-        return this;
-    }
-
-    onMessageReceived(callback) {
-        this.handleOnMessageReceived = callback;
-        return this;
-    }
-
-    onMessageSent(callback) {
-        this.handleMessageSent = callback;
-        return this;
+        super('App')
     }
 
     // Send data by file-transfer
     sendFile(data, filename = 'ft-from-app') {
-        console.log(`App -> File transfer -> ${filename} [enqueueing]`)
-
-        outbox.enqueue(filename, encode(data))
-            .then(ft => {
-                console.log(`App -> File transfer -> ${ft.name} [${ft.readyState}]`);
-                ft.onchange = evt => {
-                    console.log(`App -> File transfer -> ${ft.name} [${ft.readyState}]`)
-                }
-            })
-            .catch(error => {
-                console.log(`App -> File transfer -> Error: Failed to queue ${filename}: ${error}`);
-            })
-    }
-
-    // Send data by socket
-    sendMessage(data = { cmd: '', payload: {} }) {
-        console.log(`App -> messaging -> send [${this.socketState()}]`)
-
-        try {
-            messaging.peerSocket.send(data);
-            this.handleMessageSent(data);
-            return true
-        }
-        catch (err) {
-            console.error(err + ` Socket is ${this.socketState()}`)
-        }
-        return false
-    }
-
-    socketState() {
-        return socketCodes[messaging.peerSocket.readyState] || '?'
+        super.sendFile(data, filename)
     }
 }
 
-export let transfer = new Transfer()
+export let transfer = new AppTransfer()

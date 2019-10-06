@@ -33,18 +33,6 @@ transfer.onMessageReceived(function ({ data }) {
     if (cmd === 'FORCE_COMPANION_TRANSFER') {
         dataReceivedFromWatch = payload;
         sendData()
-
-        // if (dataReceivedFromWatch.reason === 'Initial transfer request from App') {
-        //     transfer.enumerate().then(fileTransfers => {
-        //         //console.log(`Panding transfers: ${fileTransfers.length}`)
-        //         if (fileTransfers.length === 0) {
-        //             sendData()
-        //         }
-        //     })
-        // }
-        // else {
-        //     sendData()
-        // }
     }
     else if (cmd === 'XDRIP_ALERT_SNOOZE') {
         snoozeXdripAlert()
@@ -115,7 +103,7 @@ me.onwakeinterval = () => {
 
 me.onunload = () => {
     console.info(`Companion -> onunload event`);
-    transfer.cancel();
+    transfer.cancelFileTransfers();
 }
 
 app.onreadystatechange = () => {
