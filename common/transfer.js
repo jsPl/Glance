@@ -3,7 +3,7 @@ import { encode } from 'cbor';
 import { socketCodes } from './index';
 import { outbox } from "file-transfer";
 
-const FILE_TRANSFER_MAX_RETRIES = 5;
+const FILE_TRANSFER_MAX_RETRIES = 2;
 
 export default class Transfer {
     socketClosedCleanly;
@@ -34,8 +34,6 @@ export default class Transfer {
             console.log(`${this.moduleName} -> messaging -> onmessage from app: ` + JSON.stringify(evt.data));
             this.handleOnMessageReceived(evt);
         }
-
-        //inbox.addEventListener('newfile', this.processIncomingFiles);
     }
 
     onOpen(callback) {
@@ -80,7 +78,7 @@ export default class Transfer {
             .catch(error => {
                 console.log(`${this.moduleName} -> File transfer -> Error: Failed to queue ${filename}: ${error}`);
                 if (retry < FILE_TRANSFER_MAX_RETRIES) {
-                    //this.sendFile(data, filename, ++retry)
+                    setTimeout(this.sendFile, 5000, data, filename, ++retry)
                 }
             })
     }
