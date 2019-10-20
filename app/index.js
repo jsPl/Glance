@@ -11,8 +11,8 @@
  * ------------------------------------------------
  */
 //import document from "document";
-import { inbox } from "file-transfer";
-import fs from "fs";
+// import { inbox } from "file-transfer";
+// import fs from "fs";
 import { vibration } from "haptics";
 import DateTime from "../modules/app/dateTime.js";
 import BatteryLevels from "../modules/app/batteryLevels.js";
@@ -90,6 +90,7 @@ let settings = appSettings.readFromFilesystemOrDefaults();
 let data = null;
 let ALERTS_SNOOZED = false;
 let isRequestingBGReading = false;
+let pingCompanionIntervalId;
 
 // Data to send back to phone
 let dataToSend = {
@@ -147,13 +148,13 @@ hide(degreeIcon);
 hide(statusLine);
 hide(largeGraphStatusLine)
 
-new Clock(function (evt) {
-    const timeText = dateTime.getTime(settings.timeFormat, evt.date);
+new Clock(function ({ date }) {
+    const [timeHHMM, timeHHMMSS] = dateTime.getTime(settings.timeFormat, date);
 
-    timeElement.text = timeText;
-    largeGraphTime.text = timeText;
+    timeElement.text = timeHHMM;
+    largeGraphTime.text = timeHHMMSS;
     dateElement.text = dateTime.getDate(settings.dateFormat, settings.enableDOW);
-})
+}, 'seconds')
 
 function updateSocketStatusLine(code = '') {
     socketMainStatusLine.text = `${transfer.socketState()}${code !== '' ? ' ' + code : ''}`;
@@ -181,8 +182,30 @@ transfer
             updateSocketStatusLine('[=]');
         }
         else if (cmd === 'XDRIP_ALERT_SNOOZE_SUCCESS') {
-            updateSocketStatusLine('[<<]')
+            updateSocketStatusLine('[<<]');
         }
+    })
+    .onFileDataReceived(function ({ cmd, payload }) {
+        console.log(`App -> New file! cmd: ${cmd}`);
+        data = payload;
+        isRequestingBGReading = false;
+
+        // Clear pinging companion when got first data
+        if (pingCompanionIntervalId) {
+            console.log('App -> Incoming data: clearInterval for data request')
+            pingCompanionIntervalId = clearInterval(pingCompanionIntervalId);
+        }
+
+        if (data.settings) {
+            // Settings changed
+            //Object.keys(data.settings).forEach(key => console.log(`${key}: ${data.settings[key]}`))
+            appSettings.writeToFilesystem(data.settings);
+            settings = data.settings;
+        }
+
+        updateSocketStatusLine('[<<]')
+        update();
+        //display.poke();
     });
 
 bodyPresenceSensor
@@ -204,34 +227,6 @@ heartRateSensor
 
 update()
 const updateIntervalId = setInterval(update, 20000);
-let pingCompanionIntervalId;
-
-inbox.onnewfile = () => {
-    console.log(`App -> New file!`);
-    isRequestingBGReading = false;
-    let fileName;
-
-    // Clear pinging companion when got first data
-    if (pingCompanionIntervalId) {
-        console.log('Companion -> Incoming data: clearInterval for data request')
-        pingCompanionIntervalId = clearInterval(pingCompanionIntervalId);
-    }
-
-    while (fileName = inbox.nextFile()) {
-        data = fs.readFileSync(fileName, "cbor");
-
-        if (data.settings) {
-            // Settings changed
-            //Object.keys(data.settings).forEach(key => console.log(`${key}: ${data.settings[key]}`))
-            appSettings.writeToFilesystem(data.settings);
-            settings = data.settings;
-        }
-
-        updateSocketStatusLine('[<<]')
-        update();
-        //display.poke();
-    }
-};
 
 function update() {
     // Data to send back to phone
@@ -303,7 +298,7 @@ function update() {
         console.warn('NO DATA');
 
         if (!pingCompanionIntervalId) {
-            console.log('Companion -> No data: setInterval for data request')
+            console.log('App -> No data: setInterval for data request')
 
             pingCompanionIntervalId = setInterval(function () {
                 if (transfer.socketState() === 'OPEN') {
@@ -315,10 +310,10 @@ function update() {
                 }
                 else {
                     // Try to wake up companion with file transfer
-                    transfer.sendFile({ ping: Date.now() })
+                    transfer.sendFile({ cmd: 'PING', payload: Date.now() })
                     updateSocketStatusLine('[FT]')
                 }
-            }, 5000)
+            }, 15000)
         }
 
         updateLayout();
@@ -460,6 +455,8 @@ timeElement.onclick = (e) => {
     });
     vibration.start('bump');
 
+    //transfer.sendFile({ cmd: 'PING', payload: Date.now() })
+
     const loadingIcon = '../resources/img/arrows/loading.png'
     arrows.href = loadingIcon;
     largeGraphArrows.href = loadingIcon;
@@ -471,6 +468,8 @@ me.onunload = () => {
     clearInterval(updateIntervalId);
     clearInterval(pingCompanionIntervalId);
 }
+
+setTimeout(transfer.processIncomingFiles, 1000);
 
 //<div>Icons made by <a href="http://www.freepik.com" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/designerz-base" title="Designerz Base">Designerz Base</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/twitter" title="Twitter">Twitter</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>
 

@@ -11,6 +11,8 @@
  * ------------------------------------------------
  */
 
+const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
 export default class dateTime {
     getDate(dateFormat, enableDOW) {
         //console.log('app - dateTime - getDate()')
@@ -18,7 +20,6 @@ export default class dateTime {
         let month = ('0' + (dateObj.getMonth() + 1)).slice(-2);
         let date = ('0' + dateObj.getDate()).slice(-2);
         let year = dateObj.getFullYear();
-        let days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
         if (enableDOW) {
             year = year.toString().substr(-2);
@@ -49,7 +50,7 @@ export default class dateTime {
 
         let hh = timeNow.getHours();
         let mm = timeNow.getMinutes();
-        //let ss = timeNow.getSeconds();
+        let ss = timeNow.getSeconds();
 
         if (!is24h) { // 12h
             let formatAMPM = (hh >= 12 ? 'PM' : 'AM');
@@ -62,7 +63,10 @@ export default class dateTime {
         if (mm < 10) {
             mm = '0' + mm;
         }
-        return hh + ':' + mm;
+        if (ss < 10) {
+            ss = '0' + ss;
+        }
+        return [hh + ':' + mm, hh + ':' + mm + ':' + ss];
     }
 
     getTimeSenseLastSGV(sgvDateTime) {

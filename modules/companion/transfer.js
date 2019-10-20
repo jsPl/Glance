@@ -15,21 +15,22 @@ import { inbox } from "file-transfer";
 
 class CompanionTransfer extends Transfer {
     constructor() {
-        super('Companion')
+        super('Companion');
         inbox.addEventListener('newfile', this.processIncomingFiles);
     }
 
-    // Send data to the watchface
+    // Send data to the watch by file transfer
     sendFile(data, filename = 'response2.json') {
         super.sendFile(data, filename)
     }
 
-    async processIncomingFiles() {
+    processIncomingFiles = async () => {
         let file;
         try {
             while ((file = await inbox.pop())) {
-                const payload = await file.cbor();
-                console.log(`Companion -> File transfer -> Inbox: ${JSON.stringify(payload)}`);
+                const data = await file.cbor(); // json
+                //console.log(`Companion -> File transfer -> Inbox: ${JSON.stringify(data)}`);
+                this.handleFileDataReceived(data);
             }
         }
         catch (error) {

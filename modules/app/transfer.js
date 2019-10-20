@@ -11,15 +11,32 @@
  * ------------------------------------------------
  */
 import Transfer from '../../common/transfer';
+import { inbox } from "file-transfer";
+import fs from "fs";
 
 class AppTransfer extends Transfer {
     constructor() {
-        super('App')
+        super('App');
+        inbox.addEventListener('newfile', this.processIncomingFiles);
     }
 
-    // Send data by file-transfer
+    // Send data by file transfer
     sendFile(data, filename = 'ft-from-app') {
         super.sendFile(data, filename)
+    }
+
+    processIncomingFiles = () => {
+        let fileName;
+        try {
+            while (fileName = inbox.nextFile()) {
+                const data = fs.readFileSync(fileName, 'cbor');
+                this.handleFileDataReceived(data);
+            }
+        }
+        catch (error) {
+            console.error(`App -> File transfer -> Error: Failed to process ` +
+                `incoming file ${fileName}: ${error}`);
+        }
     }
 }
 

@@ -113,7 +113,7 @@
         <text class="text text-gray" id="tempBasal" />
         <text class="text text-gray" id="predictedBg" />
       
-        <text text-anchor="middle" class="text text-gray" id="largeGraphTime" />
+        <text text-anchor="start" class="text text-gray" id="largeGraphTime" text-length='8' />
 
         <svg id="largeGraph">
             <line class="highLine" x1="0" y1="40%+1" x2="95%" y2="40%+1" fill="#FFA500" stroke-width="1" />
@@ -180,7 +180,7 @@
 
         <use id="xdripSnoozeBtn" href="#square-button" x="5" y="5" width="30%" height="40%" fill="fb-red">
             <set href="#text" attributeName="text-buffer" to="Snooze" />
-         </use>
+        </use>
 
         <!-- End Graph -->
     </svg>   

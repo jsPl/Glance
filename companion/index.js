@@ -28,16 +28,31 @@ const standardize = new Standardize();
 let dataReceivedFromWatch = null;
 let store = settings.get(dataReceivedFromWatch);
 
-transfer.onMessageReceived(function ({ data }) {
-    const { cmd, payload } = data;
-    if (cmd === 'FORCE_COMPANION_TRANSFER') {
-        dataReceivedFromWatch = payload;
-        sendData()
-    }
-    else if (cmd === 'XDRIP_ALERT_SNOOZE') {
-        snoozeXdripAlert()
-    }
-})
+transfer
+    .onMessageReceived(function ({ data }) {
+        const { cmd, payload } = data;
+        if (cmd === 'FORCE_COMPANION_TRANSFER') {
+            const { reason } = payload;
+            dataReceivedFromWatch = payload;
+
+            if (reason === 'Socket open but no SGV data transfered') {
+                transfer.enumerate().then(fileTransfers => {
+                    if (fileTransfers.length === 0) {
+                        sendData()
+                    }
+                })
+            }
+            else {
+                sendData()
+            }
+        }
+        else if (cmd === 'XDRIP_ALERT_SNOOZE') {
+            snoozeXdripAlert()
+        }
+    })
+    .onFileDataReceived(function ({ cmd, payload }) {
+        console.log(`Companion -> onFileDataReceived cmd: ${cmd}, payload: ${payload}`)
+    })
 
 async function snoozeXdripAlert() {
     console.log(`Companion -> Snooze xDrip alert`)
@@ -55,9 +70,10 @@ async function sendData({ settingsChanged = false } = {}) {
     }
 
     const bgReading = Array.isArray(bloodsugars) && bloodsugars.length > 0 ?
-        bloodsugars[0] : {};
+        bloodsugars[0] : null;
 
-    const isBgReadingMatch = dataReceivedFromWatch && dataReceivedFromWatch.lastBgTime === bgReading.date;
+    const isBgReadingMatch = dataReceivedFromWatch && bgReading
+        && dataReceivedFromWatch.lastBgTime === bgReading.date;
 
     if (isBgReadingMatch && dataReceivedFromWatch.reason !== 'force refresh') {
         console.log(`Companion -> sendData [SKIPPING], last bg time on watch match phone reading: ${bgReading.date}`)
@@ -66,11 +82,11 @@ async function sendData({ settingsChanged = false } = {}) {
         return;
     }
 
-    const dataToSend = {
+    const payload = {
         bloodSugars: standardize.bloodsugars(bloodsugars, extraData, store),
         settings: settingsChanged && standardize.settings(store) || null
     }
-    transfer.sendFile(dataToSend);
+    transfer.sendFile({ cmd: 'BG_READING', payload });
 }
 
 settingsStorage.onchange = function ({ key, oldValue, newValue }) {

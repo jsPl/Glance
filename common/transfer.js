@@ -14,7 +14,8 @@ export default class Transfer {
         this.handleClose = function () { };
         this.handleError = function () { };
         this.handleMessageSent = function () { };
-        this.handleOnMessageReceived = function () { };
+        this.handleMessageReceived = function () { };
+        this.handleFileDataReceived = function () { };
 
         messaging.peerSocket.onopen = evt => {
             console.log(`${this.moduleName} -> messaging -> socket [OPEN]`);
@@ -32,7 +33,7 @@ export default class Transfer {
         }
         messaging.peerSocket.onmessage = evt => {
             console.log(`${this.moduleName} -> messaging -> onmessage from app: ` + JSON.stringify(evt.data));
-            this.handleOnMessageReceived(evt);
+            this.handleMessageReceived(evt);
         }
     }
 
@@ -52,12 +53,17 @@ export default class Transfer {
     }
 
     onMessageReceived(callback) {
-        this.handleOnMessageReceived = callback;
+        this.handleMessageReceived = callback;
         return this;
     }
 
     onMessageSent(callback) {
         this.handleMessageSent = callback;
+        return this;
+    }
+
+    onFileDataReceived(callback) {
+        this.handleFileDataReceived = callback;
         return this;
     }
 
