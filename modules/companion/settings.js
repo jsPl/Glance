@@ -35,7 +35,10 @@ export default class settings {
             url = 'http://127.0.0.1:17580/sgv.json' + queryParms;
         }
         else if (dataSource === 'custom') {
-            url = JSON.parse(settingsStorage.getItem('customEndpoint')).name + queryParms;
+            const customEndpoint = JSON.parse(settingsStorage.getItem('customEndpoint'));
+            if (customEndpoint) {
+                url = JSON.parse(settingsStorage.getItem('customEndpoint')).name + queryParms;
+            }
         }
 
         let glucoseUnits = defaultSettings.glucoseUnits;

@@ -34,6 +34,7 @@ export default class messaging {
                 return data;
             })
             .catch(error => {
+                console.error('Error', error)
                 // not found
                 if (!error.status) {
                     error.status = '404'
@@ -50,6 +51,7 @@ export default class messaging {
 };
 
 function handleResponse(response) {
+    //console.error('handleResponse', response.type)
     let contentType = response.headers.get('content-type')
     if (contentType.includes('application/json')) {
         return handleJSONResponse(response)
@@ -63,7 +65,8 @@ function handleResponse(response) {
 function handleJSONResponse(response) {
     return response.json()
         .then(json => {
-            // console.error(JSON.stringify(json))
+            // console.warn('handleJSONResponse json', JSON.stringify(json))
+            // console.warn('handleJSONResponse response', response.ok)
 
             if (response.ok) {
                 //logs.add(`Line 83 companion - fetch - handleJSONResponse() response.ok`)
