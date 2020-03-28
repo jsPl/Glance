@@ -124,6 +124,15 @@
   y: 8%+3;
 }
 
+#largeGraphStatusLine {
+  x: 3;
+}
+
+#socketMainStatusLine {
+  x: 3%;
+  y: 60%-5;
+}
+
 #steps {
   x: 10%+3;
   y: 85%+2;
@@ -364,7 +373,7 @@
 }
 
 #largeGraphTime {
-  x: 50%;
+  x: 30%+10;
   y: 8%+4;
 }
 

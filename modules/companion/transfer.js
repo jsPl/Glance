@@ -10,57 +10,34 @@
  *
  * ------------------------------------------------
  */
-import { outbox } from "file-transfer";
-import { encode } from 'cbor';
-import * as messaging from "messaging";
+import Transfer from '../../common/transfer';
+import { inbox } from "file-transfer";
 
-const FILE_TRANSFER_MAX_RETRIES = 5;
-
-export default class transfer {
+class CompanionTransfer extends Transfer {
     constructor() {
-        messaging.peerSocket.onopen = () => {
-            console.log('Companion -> messsaging -> socket open');
-        }
-        messaging.peerSocket.onclose = evt => {
-            console.log(`Companion -> messaging -> socket close: ${evt.reason} [code: ${evt.code}] wasClean: ${evt.wasClean}`);
-        }
-        messaging.peerSocket.onerror = evt => {
-            console.log(`Companion -> messaging -> socket error: ${evt.message} [code: ${evt.code}]`);
-        }
+        super('Companion');
+        inbox.addEventListener('newfile', this.processIncomingFiles);
     }
 
-    // Send data to the watchface
-    send(data, retry = 0) {
-        const filename = 'response2.json';
-        if (retry > 0) {
-            console.log(`Companion -> File transfer -> retrying ${retry}/${FILE_TRANSFER_MAX_RETRIES}`)
-        }
-        console.log(`Companion -> File transfer -> enqueueing ${filename}`)
-
-        outbox.enqueue(filename, encode(data))
-            .then(ft => {
-                ft.onchange = evt => {
-                    console.log(`Companion -> File transfer -> Transfer state change of ${ft.name} [${ft.readyState}]`)
-                }
-                console.log(`Companion -> File transfer -> Transfer of ${ft.name} successfully queued [${ft.readyState}]`);
-            })
-            .catch(error => {
-                console.log(`Companion -> File transfer -> Error: Failed to queue ${filename}: ${error}`);
-                if (retry < FILE_TRANSFER_MAX_RETRIES) {
-                    //this.send(data, ++retry)
-                }
-            })
+    // Send data to the watch by file transfer
+    sendFile(data, filename = 'response2.json') {
+        super.sendFile(data, filename)
     }
 
-    cancel() {
-        outbox.enumerate()
-            .then(fileTransfers => {
-                console.log(`Companion -> File transfer -> Cancelling file transfers:`);
-
-                fileTransfers.forEeach(ft => {
-                    console.log(` ${ft.name} [${ft.readyState}]`);
-                    ft.cancel();
-                })
-            })
+    processIncomingFiles = async () => {
+        let file;
+        try {
+            while ((file = await inbox.pop())) {
+                const data = await file.cbor(); // json
+                //console.log(`Companion -> File transfer -> Inbox: ${JSON.stringify(data)}`);
+                this.handleFileDataReceived(data);
+            }
+        }
+        catch (error) {
+            console.error(`Companion -> File transfer -> Error: Failed to process ` +
+                `incoming file ${file}: ${error}`);
+        }
     }
 }
+
+export let transfer = new CompanionTransfer()

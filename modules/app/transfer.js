@@ -10,64 +10,34 @@
  *
  * ------------------------------------------------
  */
-import * as messaging from "messaging";
-import { me } from "appbit";
+import Transfer from '../../common/transfer';
+import { inbox } from "file-transfer";
+import fs from "fs";
 
-export default class transfer {
+class AppTransfer extends Transfer {
     constructor() {
-        messaging.peerSocket.onopen = () => {
-            console.log('App -> messaging -> socket open');
-        }
-        messaging.peerSocket.onclose = evt => {
-            console.log(`App -> messaging -> socket close: ${evt.reason} [code: ${evt.code}] wasClean: ${evt.wasClean}`);
-        }
-        messaging.peerSocket.onerror = evt => {
-            console.log(`App -> messaging -> socket error: ${evt.message} [code: ${evt.code}]`);
-        }
+        super('App');
+        inbox.addEventListener('newfile', this.processIncomingFiles);
     }
 
-    // Send data
-    send(data) {
-        const isOpen = messaging.peerSocket.readyState === messaging.peerSocket.OPEN;
-        const isClosed = messaging.peerSocket.readyState === messaging.peerSocket.CLOSED;
-        const stateText = isOpen ? 'OPEN' : (isClosed ? 'CLOSED' : 'unknown');
+    // Send data by file transfer
+    sendFile(data, filename = 'ft-from-app') {
+        super.sendFile(data, filename)
+    }
 
-        console.log(`App -> messaging -> send [${stateText}]`)
-
-        // if (isOpen) {
+    processIncomingFiles = () => {
+        let fileName;
         try {
-            messaging.peerSocket.send({ command: 'forceCompanionTransfer', data: data });
-        }
-        catch (err) {
-            console.error(err)
-            if (isClosed) {
-                //console.log('Exiting due to socket CLOSED')
-                //me.exit();
+            while (fileName = inbox.nextFile()) {
+                const data = fs.readFileSync(fileName, 'cbor');
+                this.handleFileDataReceived(data);
             }
         }
-        //}
+        catch (error) {
+            console.error(`App -> File transfer -> Error: Failed to process ` +
+                `incoming file ${fileName}: ${error}`);
+        }
     }
-};
+}
 
-
-// Events
-
-// // Listen for the onopen event
-// messaging.peerSocket.onopen = function() {
-//   // Fetch weather when the connection opens
-//   fetchWeather();
-// }
-
-// Listen for messages from the companion
-// messaging.peerSocket.onmessage = function(evt) {
-//   if (evt.data) {
-//   console.log("The temperature is: " + evt.data.temperature);
-//   }
-// }
-
-// // Listen for the onerror event
-// messaging.peerSocket.onerror = function(err) {
-//   // Handle any errors
-//   console.log("Connection error: " + err.code + " - " + err.message);
-// }
-
+export let transfer = new AppTransfer()

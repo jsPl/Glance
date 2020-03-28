@@ -11,26 +11,30 @@
  * ------------------------------------------------
  */
 
-
-
-import Logs from "./logs.js";
-const logs = new Logs();
-
-
 export default class messaging {
     //Fetch data from an API endpoint and return a promise
-    async get(url) {
-        const trimmedURL = url.replace(/ /g, "");
-        //logs.add('Line 16: companion - fetch - get() ' + trimmedURL)
+    async get(url, params) {
+        let trimmedURL = url.replace(/ /g, "");
+
+        if (params) {
+            const urlObj = new URL(trimmedURL);
+            Object.entries(params).forEach(([key, value]) => urlObj.searchParams.set(key, value));
+            trimmedURL = urlObj.toString();
+        }
+
         console.log('Companion -> fetch: get data from ' + trimmedURL);
 
         return await fetch(trimmedURL)
             .then(handleResponse)
-            .then((data) => {
-                //logs.add(`Line 28: companion - fetch - get() Data Okay return`)
-                console.log('Companion -> fetch: got data');
+            .then(data => {
+                const txt = Array.isArray(data) && data.length > 0 ?
+                    'sgv: ' + data[0].sgv + ' time: ' + data[0].date : '';
+
+                console.log(`Companion -> fetch: got data ${txt}`);
                 return data;
-            }).catch((error) => {
+            })
+            .catch(error => {
+                console.error('Error', error)
                 // not found
                 if (!error.status) {
                     error.status = '404'
@@ -47,12 +51,12 @@ export default class messaging {
 };
 
 function handleResponse(response) {
+    //console.error('handleResponse', response.type)
     let contentType = response.headers.get('content-type')
     if (contentType.includes('application/json')) {
         return handleJSONResponse(response)
-    } else if (contentType.includes('text/html')) {
-        return handleTextResponse(response)
-    } else {
+    }
+    else {
         // Other response types as necessary. I haven't found a need for them yet though.
         throw new Error(`Sorry, content-type ${contentType} not supported`)
     }
@@ -61,7 +65,8 @@ function handleResponse(response) {
 function handleJSONResponse(response) {
     return response.json()
         .then(json => {
-            // console.error(JSON.stringify(json))
+            // console.warn('handleJSONResponse json', JSON.stringify(json))
+            // console.warn('handleJSONResponse response', response.ok)
 
             if (response.ok) {
                 //logs.add(`Line 83 companion - fetch - handleJSONResponse() response.ok`)
@@ -71,22 +76,6 @@ function handleJSONResponse(response) {
                     status: response.status,
                     statusText: response.statusText
                 }))
-            }
-        })
-}
-// This doesnt work
-function handleTextResponse(response) {
-    return response.text()
-        .then(text => {
-            if (response.ok) {
-                //logs.add(`Line 98 companion - fetch - handleTextResponse() response.ok`)
-                return JSON.parse(text)
-            } else {
-                return Promise.reject({
-                    status: response.status,
-                    statusText: response.statusText,
-                    err: text
-                })
             }
         })
 }

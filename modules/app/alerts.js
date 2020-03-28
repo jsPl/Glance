@@ -10,17 +10,9 @@
  *
  * ------------------------------------------------
  */
-
-
 import document from "document";
-import {
-	vibration
-} from "haptics";
-import Transfer from "./transfer.js";
-
+import { vibration } from "haptics";
 import DateTime from "./dateTime.js";
-
-//const transfer = new Transfer();
 
 let sgv = document.getElementById("sgv");
 let largeGraphsSgv = document.getElementById("largeGraphsSgv");
@@ -36,7 +28,7 @@ let popupLeadText = popup.getElementById('copy')
 const dateTime = new DateTime();
 
 export default class alerts {
-	check(bg, settings, DISABLE_ALERTS, timeSenseLastSGV) {
+	check(bg, settings, ALERTS_SNOOZED, timeSenseLastSGV) {
 		let currentBG = bg.currentbg;
 		let loopstatus = bg.loopstatus;
 		let staleData = parseInt(timeSenseLastSGV, 10) >= settings.staleDataAlertAfter; // Boolean true if  timeSenseLastSGV > 15
@@ -54,7 +46,7 @@ export default class alerts {
 		let timeSenseLastSGV = dateTime.getTimeSenseLastSGV(bg.datetime)[1];
 		if (bg.sgv <= parseInt(settings.lowThreshold) && !staleData) {
 			if (!settings.disableAlert) {
-				if (!DISABLE_ALERTS) {
+				if (!ALERTS_SNOOZED) {
 					if (settings.lowAlerts) {
 						if (timeSenseLastSGV <= 8) {
 							console.log('low BG')
@@ -76,7 +68,7 @@ export default class alerts {
 		}
 		if (bg.sgv >= parseInt(settings.highThreshold) && !staleData) {
 			if (!settings.disableAlert) {
-				if (!DISABLE_ALERTS) {
+				if (!ALERTS_SNOOZED) {
 					if (settings.highAlerts) {
 						if (timeSenseLastSGV <= 8) {
 							console.log('high BG')
@@ -108,7 +100,7 @@ export default class alerts {
 		 */
 		if (loopstatus === 'Warning' && !staleData) {
 			if (!settings.disableAlert) {
-				if (!DISABLE_ALERTS) {
+				if (!ALERTS_SNOOZED) {
 					if (settings.loopstatus) {
 						console.log('loopstatus')
 						alertArrows.style.display = 'none';
@@ -127,7 +119,7 @@ export default class alerts {
 		// Check for rapid change in bg
 		if (bg.direction === 'DoubleDown' && !staleData) {
 			if (!settings.disableAlert) {
-				if (!DISABLE_ALERTS) {
+				if (!ALERTS_SNOOZED) {
 					if (settings.rapidFall) {
 						alertArrows.style.display = 'none';
 						console.log('Double Down')
@@ -141,7 +133,7 @@ export default class alerts {
 			}
 		} else if (bg.direction === 'DoubleUp' && !staleData) {
 			if (!settings.disableAlert) {
-				if (!DISABLE_ALERTS) {
+				if (!ALERTS_SNOOZED) {
 					if (settings.rapidRise) {
 						alertArrows.style.display = 'none';
 						console.log('Double Up')
@@ -158,7 +150,7 @@ export default class alerts {
 		// check if stale data 
 		if (staleData) {
 			if (!settings.disableAlert) {
-				if (!DISABLE_ALERTS) {
+				if (!ALERTS_SNOOZED) {
 					if (settings.staleData) {
 						alertArrows.style.display = 'none';
 						popupTitle.style.fill = "#de4430";
@@ -173,7 +165,6 @@ export default class alerts {
 
 	}
 	stop() {
-		console.log('app - Alerts - stop()')
 		vibration.stop();
 	}
 };

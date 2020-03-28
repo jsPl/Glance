@@ -10,7 +10,7 @@
  *
  * ------------------------------------------------
  */
-import { charger, battery } from "power";
+import { battery } from "power";
 
 export default class batteryLevels {
     get() {

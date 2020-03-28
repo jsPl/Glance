@@ -10,10 +10,8 @@
  *
  * ------------------------------------------------
  */
-
-
-
 import document from "document";
+
 let errorLine = document.getElementById("errorLine");
 let largeGraphErrorLine = document.getElementById("largeGraphErrorLine");
 
@@ -22,7 +20,6 @@ let largeGraphsSgv = document.getElementById("largeGraphsSgv");
 
 export default class errors {
     check(timeSenseLastSGV) {
-        //console.log('app - errors - check()')
         // if the bloodsugar is stale 
         if (parseInt(timeSenseLastSGV, 10) >= 15) {
             errorLine.style.display = "inline";
@@ -31,10 +28,10 @@ export default class errors {
             largeGraphErrorLine.style.fill = 'gray'
             sgv.style.fill = 'gray';
             largeGraphsSgv.style.fill = 'gray'
-        } else {
+        }
+        else {
             errorLine.style.display = "none";
             largeGraphErrorLine.style.display = "none";
         }
     }
-};
-
+}

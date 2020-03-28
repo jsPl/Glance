@@ -30,6 +30,8 @@
         <text class="text" id="iob" />
         <image class="stat-image" href="img/syringe.png" fill="white" id="syringe" />      
         
+        <text text-anchor="start" class="text text-gray" id="socketMainStatusLine" />
+
          <!-- Alert -->
          <svg id="popup" display="none">
             <!-- Black background -->
@@ -102,6 +104,8 @@
         <text text-anchor="end" class="text text-gray" id="largeGraphTimeOfLastSgv" />
         <text text-anchor="end" class="text text-gray" id="rawbg"/>
 
+        <text text-anchor="start" class="text text-gray" id="largeGraphStatusLine" />
+
         <text class="text text-gray" id="largeGraphCob" />
         <image class="stat-image" href="img/hamburger.png" fill="white" id="largeGraphHamburger" />
         <text class="text text-gray" id="largeGraphIob" />
@@ -109,7 +113,7 @@
         <text class="text text-gray" id="tempBasal" />
         <text class="text text-gray" id="predictedBg" />
       
-        <text text-anchor="middle" class="text text-gray" id="largeGraphTime" />
+        <text text-anchor="start" class="text text-gray" id="largeGraphTime" text-length='8' />
 
         <svg id="largeGraph">
             <line class="highLine" x1="0" y1="40%+1" x2="95%" y2="40%+1" fill="#FFA500" stroke-width="1" />
@@ -172,6 +176,10 @@
         <use id="exitLargeGraph" class="dialog-half-button-right" href="#square-button-negative" opacity="0">
            <set href="#text" attributeName="text-buffer" to="" />
            <set href="#text" attributeName="text-anchor" to="middle" />
+        </use>
+
+        <use id="xdripSnoozeBtn" href="#square-button" x="5" y="5" width="30%" height="40%" fill="fb-red">
+            <set href="#text" attributeName="text-buffer" to="Snooze" />
         </use>
 
         <!-- End Graph -->

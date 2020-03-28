@@ -11,104 +11,91 @@
  * ------------------------------------------------
  */
 import { settingsStorage } from "settings";
-
 import Settings from "../modules/companion/settings.js";
-import Transfer from "../modules/companion/transfer.js";
+import { transfer } from "../modules/companion/transfer.js";
 import Fetch from "../modules/companion/fetch.js";
 import Standardize from "../modules/companion/standardize.js";
-// import Weather from "../modules/companion/weather.js";
-import Logs from "../modules/companion/logs.js";
-import Sizeof from "../modules/companion/sizeof.js";
-import Dexcom from "../modules/companion/dexcom.js";
-
-import * as messaging from "messaging";
 import { me } from "companion";
 import { app, device } from "peer";
 
+const SECOND = 1000; // ms
+const MINUTE = SECOND * 60;
+
 const settings = new Settings();
-const transfer = new Transfer();
 const fetch = new Fetch();
 const standardize = new Standardize();
-const dexcom = new Dexcom();
 
-// const weatherURL = new Weather();
-const logs = new Logs();
-//const sizeof = new Sizeof();
 let dataReceivedFromWatch = null;
+let store = settings.get(dataReceivedFromWatch);
 
-async function sendData() {
-    //logs.add('companion - sendData: Version: 2.1.100')
-    // Get settings 
-    const store = settings.get(dataReceivedFromWatch);
+transfer
+    .onMessageReceived(function ({ data }) {
+        const { cmd, payload } = data;
+        if (cmd === 'FORCE_COMPANION_TRANSFER') {
+            const { reason } = payload;
+            dataReceivedFromWatch = payload;
 
-    // Get SGV data
-    let bloodsugars = null;
-    let extraData = null;
-    if (store.url === 'dexcom') {
-        let USAVSInternational = store.USAVSInternational;
-        let subDomain = 'share2';
-        if (USAVSInternational) {
-            subDomain = 'shareous1';
-        }
-        let sessionId = await dexcom.getSessionId(store.dexcomUsername, store.dexcomPassword, subDomain);
-        if (store.dexcomUsername && store.dexcomPassword) {
-            bloodsugars = await dexcom.getData(sessionId, subDomain);
-        }
-        else {
-            bloodsugars = {
-                error: {
-                    status: "500"
-                }
+            if (reason === 'Socket open but no SGV data transfered') {
+                transfer.enumerate().then(fileTransfers => {
+                    if (fileTransfers.length === 0) {
+                        sendData()
+                    }
+                })
+            }
+            else {
+                sendData()
             }
         }
-    }
-    else {
-        bloodsugars = await fetch.get(store.url);
-        if (store.extraDataUrl) {
-            extraData = await fetch.get(store.extraDataUrl);
+        else if (cmd === 'XDRIP_ALERT_SNOOZE') {
+            snoozeXdripAlert()
         }
-    }
+    })
+    .onFileDataReceived(function ({ cmd, payload }) {
+        console.log(`Companion -> onFileDataReceived cmd: ${cmd}, payload: ${payload}`)
+    })
 
-
-    Promise.all([bloodsugars, extraData]).then(function (values) {
-        const dataToSend = {
-            bloodSugars: standardize.bloodsugars(values[0], values[1], store),
-            settings: standardize.settings(store),
-            // weather: values[2].query.results.channel.item.condition,
-        }
-        transfer.send(dataToSend);
-    });
+async function snoozeXdripAlert() {
+    console.log(`Companion -> Snooze xDrip alert`)
+    await fetch.get(store.url, { tasker: 'snooze' });
+    transfer.sendMessage({ cmd: 'XDRIP_ALERT_SNOOZE_SUCCESS' })
 }
 
+async function sendData({ settingsChanged = false } = {}) {
+    // Get SGV data
+    let bloodsugars = await fetch.get(store.url);
+    let extraData = null;
 
-// Listen for messages from the device
-messaging.peerSocket.onmessage = function (evt) {
-    console.log('Companion -> onmessage: got message from app ' + JSON.stringify(evt.data));
-    if (evt.data.command === 'forceCompanionTransfer') {
-        dataReceivedFromWatch = evt.data.data;
-        sendData()
+    if (store.extraDataUrl) {
+        extraData = await fetch.get(store.extraDataUrl);
     }
-};
 
-// Listen for the onerror event
-messaging.peerSocket.onerror = function (err) {
-    // Handle any errors
-    console.log("Connection error: " + err.code + " - " + err.message);
-};
+    const bgReading = Array.isArray(bloodsugars) && bloodsugars.length > 0 ?
+        bloodsugars[0] : null;
 
-settingsStorage.onchange = function (evt) {
-    logs.add('Line 70: companion - Settings changed send to watch');
-    sendData()
-    if (evt.key === "authorizationCode") {
-        // Settings page sent us an oAuth token
-        let data = JSON.parse(evt.newValue);
-        dexcom.getAccessToken(data.name);
+    const isBgReadingMatch = dataReceivedFromWatch && bgReading
+        && dataReceivedFromWatch.lastBgTime === bgReading.date;
 
+    if (isBgReadingMatch && dataReceivedFromWatch.reason !== 'force refresh') {
+        console.log(`Companion -> sendData [SKIPPING], last bg time on watch match phone reading: ${bgReading.date}`)
+        setTimeout(sendData, 30 * SECOND);
+        transfer.sendMessage({ cmd: 'BG_READING_MATCH' })
+        return;
     }
+
+    const payload = {
+        bloodSugars: standardize.bloodsugars(bloodsugars, extraData, store),
+        settings: settingsChanged && standardize.settings(store) || null
+    }
+    transfer.sendFile({ cmd: 'BG_READING', payload });
 }
 
-const MINUTE = 1000 * 60;
-me.wakeInterval = 5 * MINUTE;
+settingsStorage.onchange = function ({ key, oldValue, newValue }) {
+    console.log(`Companion -> settingsStorage -> change [${key}]: ${oldValue} -> ${newValue}`)
+    store = settings.get(dataReceivedFromWatch);
+    sendData({ settingsChanged: true });
+}
+
+//me.wakeInterval = 5 * MINUTE;
 
 if (me.launchReasons.wokenUp) {
     // The companion started due to a periodic timer
@@ -125,35 +112,40 @@ else if (me.launchReasons.peerAppLaunched) {
 else if (me.launchReasons.settingsChanged) {
     console.info("Companion launch reason: settingsChanged")
 }
-// else {
-//     // Close the companion and wait to be awoken
-//     me.yield()
-// }
 
 me.onwakeinterval = () => {
     console.info('Companion -> onwakeinterval event')
 }
 
 me.onunload = () => {
-    const rand = Math.random();
-    console.info(`Companion -> onunload event: settingsStorage force refresh with random value ${rand}`);
-    transfer.cancel();
-    settingsStorage.setItem('refresh', rand);
+    console.info(`Companion -> onunload event`);
+    transfer.cancelFileTransfers();
 }
 
 app.onreadystatechange = () => {
-    console.log(`Companion -> app.onreadystatechange [${device.modelName}] ${app.readyState}`);
-   
+    let txt = `Companion -> App.onreadystatechange [${device.modelName}] ${app.readyState}`;
+
     if (app.readyState === 'started') {
-        console.log(`Companion -> app.onreadystatechange [${app.readyState}] -> sendData()`);
-        sendData()
+        txt += ' -> sendData()';
+        sendData();
+        me.wakeInterval = 5 * MINUTE;
     }
     else if (app.readyState === 'stopped') {
-        //console.log(`Companion -> app.onreadystatechange [${app.readyState}] -> Close the companion and wait to be awoken`);
-        // Close the companion and wait to be awoken
-        //me.yield()
+        if (transfer.getSocketClosedCleanly() === true) {
+            // TODO disable wakeInterval only of watch is switched off (if possible to determine)
+            me.wakeInterval = undefined;
+        }
+        else {
+            txt += `: socket wasn't closed cleanly`
+        }
     }
+    console.log(txt);
 }
 
-// wait 1 seconds before getting things started
-//setTimeout(sendData, 1000);
+transfer.processIncomingFiles()
+
+if (me.host.app.name === 'unknown') {
+    // Running on Simulator
+    console.log(`Companion -> Running on Simulator`)
+    setTimeout(sendData, 1000)
+}
