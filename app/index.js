@@ -313,7 +313,7 @@ function update() {
                     transfer.sendFile({ cmd: 'PING', payload: Date.now() })
                     updateSocketStatusLine('[FT]')
                 }
-            }, 15000)
+            }, 30000)
         }
 
         updateLayout();
