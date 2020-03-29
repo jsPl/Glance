@@ -10,9 +10,6 @@
  *
  * ------------------------------------------------
  */
-//import document from "document";
-// import { inbox } from "file-transfer";
-// import fs from "fs";
 import { vibration } from "haptics";
 import DateTime from "../modules/app/dateTime.js";
 import BatteryLevels from "../modules/app/batteryLevels.js";

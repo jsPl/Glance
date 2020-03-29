@@ -32,7 +32,7 @@ export default class Transfer {
             this.handleError(evt)
         }
         messaging.peerSocket.onmessage = evt => {
-            console.log(`${this.moduleName} -> messaging -> onmessage from app: ` + JSON.stringify(evt.data));
+            console.log(`${this.moduleName} -> messaging -> onmessage: ` + JSON.stringify(evt.data));
             this.handleMessageReceived(evt);
         }
     }
