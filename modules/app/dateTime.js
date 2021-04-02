@@ -70,24 +70,23 @@ export default class dateTime {
     }
 
     getTimeSenseLastSGV(sgvDateTime) {
-        //console.log('app - dateTime - getTimeSenseLastSGV()')
-        let currentTime = new Date();
-        let lastSGVTime = new Date(sgvDateTime);
-        let secondsDiff = (currentTime.getTime() - lastSGVTime.getTime()) / 1000
-        let timeSense = '';
-        const timeSenseNumber = Math.floor(secondsDiff / 60);
+        const currentTime = new Date();
+        const lastSGVTime = new Date(sgvDateTime);
+        const secondsDiff = (currentTime.getTime() - lastSGVTime.getTime()) / 1000
+        let timeSenseText = '';
+        const timeSenseMinutes = Math.floor(secondsDiff / 60);
         if (secondsDiff > 86400) {
-            timeSense = '~' + Math.floor(secondsDiff / 86400) + 'D';
+            timeSenseText = '~' + Math.floor(secondsDiff / 86400) + 'D';
         }
         else if (secondsDiff > 3600) {
-            timeSense = '~' + Math.floor(secondsDiff / 3600) + 'h';
+            timeSenseText = '~' + Math.floor(secondsDiff / 3600) + 'h';
         }
         else if (secondsDiff > 0) {
-            timeSense = Math.floor(secondsDiff / 60) + ' min';
+            timeSenseText = timeSenseMinutes + ' min';
         }
         else {
-            timeSense = 'now';
+            timeSenseText = 'now';
         }
-        return [timeSense, timeSenseNumber];
+        return [timeSenseText, timeSenseMinutes];
     }
 }

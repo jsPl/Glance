@@ -75,7 +75,7 @@ function mySettings(props) {
       
       
       <Section title={<Text bold align="center">Date/Time Settings</Text>}>
-        <Select label={`Time Format`} settingsKey="timeFormat" options={[ {name:"12hr", value:false}, {name:"24hr", value:true} ]} />
+        <Select label={`Time Format`} settingsKey="timeFormat" options={[ {name:"12h", value:false}, {name:"24h", value:true} ]} />
         <Select label={`Date Format`} settingsKey="dateFormat" options={[ {name:"MM/DD/YYYY", value:"MM/DD/YYYY"}, {name:"DD/MM/YYYY", value:"DD/MM/YYYY"}, {name:"YYYY/MM/DD", value:"YYYY/MM/DD"}, {name:"DD.MM.YYYY", value:"DD.MM.YYYY"} ]} />
        <Toggle settingsKey="enableDOW" label="Day of week at end of date"/>
       </Section>  

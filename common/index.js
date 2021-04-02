@@ -39,6 +39,21 @@ export const socketCodes = {
     [CloseCode.CONNECTION_LOST]: 'CONNECTION_LOST'
 }
 
+export const TRANSFER_CMD = {
+    XDRIP_ALERT_SNOOZE: 'XDRIP_ALERT_SNOOZE',
+    XDRIP_ALERT_SNOOZE_SUCCESS: 'XDRIP_ALERT_SNOOZE_SUCCESS',
+    BG_READING_MATCH: 'BG_READING_MATCH',
+    FORCE_COMPANION_TRANSFER: 'FORCE_COMPANION_TRANSFER',
+    PING: 'PING',
+    BG_READING: 'BG_READING',
+    BG_READING_MATCH: 'BG_READING_MATCH'
+}
+
+export const TRANSFER_REASON = {
+    FORCE_REFRESH: 'force refresh',
+    SOCKET_OPEN_BUT_NO_SGV_DATA_TRANSFERED: 'Socket open but no SGV data transfered'
+}
+
 export function shallowObjectCopy(srcObj, props) {
     let objCopy = {};
     let key;

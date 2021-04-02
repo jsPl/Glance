@@ -17,6 +17,7 @@ import Fetch from "../modules/companion/fetch.js";
 import Standardize from "../modules/companion/standardize.js";
 import { me } from "companion";
 import { app, device } from "peer";
+import { TRANSFER_CMD, TRANSFER_REASON } from '../common';
 
 const SECOND = 1000; // ms
 const MINUTE = SECOND * 60;
@@ -31,11 +32,11 @@ let store = settings.get(dataReceivedFromWatch);
 transfer
     .onMessageReceived(function ({ data }) {
         const { cmd, payload } = data;
-        if (cmd === 'FORCE_COMPANION_TRANSFER') {
+        if (cmd === TRANSFER_CMD.FORCE_COMPANION_TRANSFER) {
             const { reason } = payload;
             dataReceivedFromWatch = payload;
 
-            if (reason === 'Socket open but no SGV data transfered') {
+            if (reason === TRANSFER_REASON.SOCKET_OPEN_BUT_NO_SGV_DATA_TRANSFERED) {
                 transfer.enumerate().then(fileTransfers => {
                     if (fileTransfers.length === 0) {
                         sendData()
@@ -46,7 +47,7 @@ transfer
                 sendData()
             }
         }
-        else if (cmd === 'XDRIP_ALERT_SNOOZE') {
+        else if (cmd === TRANSFER_CMD.XDRIP_ALERT_SNOOZE) {
             snoozeXdripAlert()
         }
     })
@@ -57,7 +58,7 @@ transfer
 async function snoozeXdripAlert() {
     console.log(`Companion -> Snooze xDrip alert`)
     await fetch.get(store.url, { tasker: 'snooze' });
-    transfer.sendMessage({ cmd: 'XDRIP_ALERT_SNOOZE_SUCCESS' })
+    transfer.sendMessage({ cmd: TRANSFER_CMD.XDRIP_ALERT_SNOOZE_SUCCESS })
 }
 
 async function sendData({ settingsChanged = false } = {}) {
@@ -75,10 +76,10 @@ async function sendData({ settingsChanged = false } = {}) {
     const isBgReadingMatch = dataReceivedFromWatch && bgReading
         && dataReceivedFromWatch.lastBgTime === bgReading.date;
 
-    if (isBgReadingMatch && dataReceivedFromWatch.reason !== 'force refresh') {
+    if (isBgReadingMatch && dataReceivedFromWatch.reason !== TRANSFER_REASON.FORCE_REFRESH) {
         console.log(`Companion -> sendData [SKIPPING], last bg time on watch match phone reading: ${bgReading.date}`)
         setTimeout(sendData, 30 * SECOND);
-        transfer.sendMessage({ cmd: 'BG_READING_MATCH' })
+        transfer.sendMessage({ cmd: TRANSFER_CMD.BG_READING_MATCH })
         return;
     }
 
@@ -86,7 +87,7 @@ async function sendData({ settingsChanged = false } = {}) {
         bloodSugars: standardize.bloodsugars(bloodsugars, extraData, store),
         settings: settingsChanged && standardize.settings(store) || null
     }
-    transfer.sendFile({ cmd: 'BG_READING', payload });
+    transfer.sendFile({ cmd: TRANSFER_CMD.BG_READING, payload });
 }
 
 settingsStorage.onchange = function ({ key, oldValue, newValue }) {

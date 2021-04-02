@@ -22,7 +22,7 @@ import { me } from "appbit";
 import { $, hide, show } from '../modules/app/dom';
 import { heartRateSensor, bodyPresenceSensor } from '../modules/app/sensors';
 import { appSettings } from '../modules/app/app-settings';
-import { shallowObjectCopy } from '../common';
+import { shallowObjectCopy, TRANSFER_CMD, TRANSFER_REASON } from '../common';
 import Clock from '../modules/app/clock';
 
 const dateTime = new DateTime();
@@ -116,7 +116,7 @@ dismiss.onclick = function (evt) {
 
 xdripSnoozeBtn.onclick = evt => {
     console.log('App -> Snoozing xDrip alert')
-    transfer.sendMessage({ cmd: 'XDRIP_ALERT_SNOOZE' })
+    transfer.sendMessage({ cmd: TRANSFER_CMD.XDRIP_ALERT_SNOOZE })
 }
 
 function disableAlertsFalse() {
@@ -175,10 +175,10 @@ transfer
     })
     .onMessageReceived(function ({ data }) {
         const { cmd } = data;
-        if (cmd === 'BG_READING_MATCH') {
+        if (cmd === TRANSFER_CMD.BG_READING_MATCH) {
             updateSocketStatusLine('[=]');
         }
-        else if (cmd === 'XDRIP_ALERT_SNOOZE_SUCCESS') {
+        else if (cmd === TRANSFER_CMD.XDRIP_ALERT_SNOOZE_SUCCESS) {
             updateSocketStatusLine('[<<]');
         }
     })
@@ -267,11 +267,11 @@ function update() {
 
         if (!isRequestingBGReading && lastBgReadingMinAgo >= 5) {
             console.log(`Last reading is from over ${lastBgReadingMinAgo} minutes ago. Requesting data...`)
-            const success = transfer.sendMessage({
-                cmd: 'FORCE_COMPANION_TRANSFER',
+            const isSuccess = transfer.sendMessage({
+                cmd: TRANSFER_CMD.FORCE_COMPANION_TRANSFER,
                 payload: shallowObjectCopy(dataToSend, { reason: `bg reading over ${lastBgReadingMinAgo} min ago` })
             });
-            isRequestingBGReading = success;
+            isRequestingBGReading = isSuccess;
         }
 
         alerts.check(currentBgReading, settings, ALERTS_SNOOZED, timeSenseLastSGV);
@@ -301,13 +301,13 @@ function update() {
                 if (transfer.socketState() === 'OPEN') {
                     // Socket is open but no file received from companion yet.
                     transfer.sendMessage({
-                        cmd: 'FORCE_COMPANION_TRANSFER',
-                        payload: shallowObjectCopy(dataToSend, { reason: 'Socket open but no SGV data transfered' })
+                        cmd: TRANSFER_CMD.FORCE_COMPANION_TRANSFER,
+                        payload: shallowObjectCopy(dataToSend, { reason: TRANSFER_REASON.SOCKET_OPEN_BUT_NO_SGV_DATA_TRANSFERED })
                     })
                 }
                 else {
                     // Try to wake up companion with file transfer
-                    transfer.sendFile({ cmd: 'PING', payload: Date.now() })
+                    transfer.sendFile({ cmd: TRANSFER_CMD.PING, payload: Date.now() })
                     updateSocketStatusLine('[FT]')
                 }
             }, 30000)
@@ -447,12 +447,10 @@ exitLargeGraph.onclick = (e) => {
 timeElement.onclick = (e) => {
     console.log("FORCE Activated!");
     transfer.sendMessage({
-        cmd: 'FORCE_COMPANION_TRANSFER',
-        payload: shallowObjectCopy(dataToSend, { reason: 'force refresh' })
+        cmd: TRANSFER_CMD.FORCE_COMPANION_TRANSFER,
+        payload: shallowObjectCopy(dataToSend, { reason: TRANSFER_REASON.FORCE_REFRESH })
     });
     vibration.start('bump');
-
-    //transfer.sendFile({ cmd: 'PING', payload: Date.now() })
 
     const loadingIcon = '../resources/img/arrows/loading.png'
     arrows.href = loadingIcon;
