@@ -25,12 +25,18 @@
     }
   },
   "devDependencies": {
-    "@fitbit/sdk": "^4.2.1",
-    "@fitbit/sdk-cli": "^1.7.3"
+    "@babel/core": "^7.13.10",
+    "@babel/node": "^7.13.10",
+    "@babel/preset-env": "^7.13.10",
+    "@fitbit/sdk": "^4.2.2",
+    "@fitbit/sdk-cli": "^1.7.3",
+    "babel-jest": "^26.6.3",
+    "jest": "^26.6.3"
   },
   "scripts": {
     "build": "fitbit-build",
     "build-and-install-log": "echo build-and-install | npx fitbit > log.txt",
-    "build-and-install": "echo build-and-install | npx fitbit"
+    "build-and-install": "echo build-and-install | npx fitbit",
+    "test": "jest"
   }
 }
